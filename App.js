@@ -1,19 +1,45 @@
+import { useCallback } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, SafeAreaView } from 'react-native';
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
+
+import StarterScreen from './pages/StarterScreen';
+
+SplashScreen.preventAutoHideAsync();
 
 export default function App() {
+
+  const [fontsLoaded, fontError] = useFonts({
+    'DMBold': require('./assets/fonts/DMSans-Bold.ttf'),
+    'DMMedium': require('./assets/fonts/DMSans-Medium.ttf'),
+    'DMRegular': require('./assets/fonts/DMSans-Regular.ttf'),
+  });
+  const onLayoutRootView = useCallback(async () => {
+    if (fontsLoaded || fontError) {
+      await SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded, fontError]);
+
+  if (!fontsLoaded && !fontError) {
+    return null;
+  }
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
+    <SafeAreaView style={styles.container} onLayout={onLayoutRootView}>
       <StatusBar style="auto" />
-    </View>
+
+      <StarterScreen />
+    </SafeAreaView>
   );
 }
+
+
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#BAE3BB',
     alignItems: 'center',
     justifyContent: 'center',
   },

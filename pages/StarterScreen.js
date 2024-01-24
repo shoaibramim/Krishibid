@@ -15,7 +15,7 @@ const StarterScreen = () => {
             contentFit="cover"
             source={require("../assets/icons/photo-camera.png")}
           />
-          <Text style={styles.buttonText}>Detect</Text>
+          <Text style={styles.buttonText}>&nbsp; Detect</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.buttonFlexBox}>
           <Image 
@@ -23,7 +23,7 @@ const StarterScreen = () => {
             contentFit="cover"
             source={require("../assets/icons/user.png")}
           />
-          <Text style={styles.buttonText}>Sign In</Text>
+          <Text style={styles.buttonText}>&nbsp; Sign In</Text>
         </TouchableOpacity>
     
     </View>
@@ -76,11 +76,12 @@ const styles = StyleSheet.create({
       lineHeight: 26,
       fontWeight: "500",
       textAlign: "center",
+      marginTop: 4
   },
     cameraIcon: {
       width: 30,
       height: 30,
-      justifyContent: "flex-start"
+      justifyContent: "flex-start",
     },
     userIcon: {
       width: 30,

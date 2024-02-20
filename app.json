@@ -9,7 +9,16 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#BAE3BB"
+      "backgroundColor": "#BAE3BB",
+      "plugins": [
+        [
+          "expo-image-picker",
+          {
+            "photosPermission": "Allow $(PRODUCT_NAME) to access your photos",
+            "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera"
+          }
+        ]
+      ]
     },
     "assetBundlePatterns": [
       "**/*"

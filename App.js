@@ -1,14 +1,21 @@
 import { useCallback } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, SafeAreaView} from 'react-native';
 import { useFonts } from 'expo-font';
+import { StyleSheet, Text, View, SafeAreaView} from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { NavigationContainer } from '@react-navigation/native';
 
 import StarterScreen from './pages/StarterScreen';
+import ClickOrSelectImage from './pages/ClickOrSelectImage';
+
 
 SplashScreen.preventAutoHideAsync();
 
 export default function App() {
+
+
+  const Stack = createNativeStackNavigator();
 
   const [fontsLoaded, fontError] = useFonts({
     'DMBold': require('./assets/fonts/DMSans-Bold.ttf'),
@@ -25,12 +32,18 @@ export default function App() {
     return null;
   }
 
-  return (
-    <SafeAreaView style={styles.container} onLayout={onLayoutRootView}>
-      <StatusBar />
 
-      <StarterScreen />
-    </SafeAreaView>
+  return (
+
+    <NavigationContainer>
+      <Stack.Navigator>
+
+        <Stack.Screen name="StarterScreen" component={StarterScreen} options={{headerShown:false}} initialParams={{'onLayoutRootView':onLayoutRootView}} />
+        <Stack.Screen name="ClickOrSelectImage" component={ClickOrSelectImage} options={{headerShown:false}} initialParams={{'onLayoutRootView':onLayoutRootView}}/>
+
+
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
 

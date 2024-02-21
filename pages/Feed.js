@@ -1,23 +1,42 @@
-import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
-import React from 'react';
+import { View, Text, Image, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import React, {useState} from 'react';
+import { FontAwesome, Entypo, AntDesign } from '@expo/vector-icons';
+import {auth, db} from '../firebase';
+import { signOut } from 'firebase/auth';
+import { setLogLevel } from 'firebase/app';
 
 export default function Feed(props){
     const {navigation,route} = props;
     const onLayoutRootView = route.params.onLayoutRootView;
 
+    const [loading, setloading] = useState(false);
+
+    const handleSignOut = ()=>{
+      setloading(true);
+      auth.signOut();
+      navigation.replace('StarterScreen');
+      setloading(false);
+    }
+
      return(<View style={styles.container} onLayout={onLayoutRootView}>
         <Text style={styles.textStyle}>
-            Feeeeeeeeeeeeeeed
+            Feeeeeeeed
         </Text>
-    </View>)
-}
+        <TouchableOpacity style={styles.buttonFlexBox} onPress={handleSignOut}>
+          <AntDesign name="logout" size={24} color="white" />
+            <Text style={styles.buttonText}>
+              {loading? <ActivityIndicator size={22} color={"#fff"}/>: "Log Out"}
+            </Text>
+        </TouchableOpacity>
+    </View>
+    )}
 
 const styles = StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: '#BAE3BB',
       alignItems: 'center',
-      //justifyContent: 'center',
+      justifyContent: 'center',
     },
     logoStarterScreen: {
       maxWidth: "100%",
@@ -38,7 +57,7 @@ const styles = StyleSheet.create({
       width: "100%",
     },
     buttonFlexBox: {
-      marginTop: 20,
+      marginHorizontal: 80,
       justifyContent: "center",
       alignItems: "center",
       alignContent: 'center',

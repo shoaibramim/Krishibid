@@ -9,6 +9,7 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@react-native-community/datetimepicker": "^7.6.2",
     "@react-native-community/masked-view": "^0.1.11",
     "@react-navigation/native": "^6.1.10",
     "@react-navigation/native-stack": "^6.9.18",
@@ -24,6 +25,9 @@
     "expo-status-bar": "~1.11.1",
     "expo-system-ui": "~2.9.3",
     "firebase": "^10.8.0",
+    "gsap": "^3.12.5",
+    "gsap-rn": "^0.0.18",
+    "moment": "^2.30.1",
     "react": "18.2.0",
     "react-native": "0.73.4",
     "react-native-gesture-handler": "~2.14.0",

@@ -18,9 +18,12 @@ export default function Login (props){
             setloading(true);
             setEmail(email.trim());
             const { user } =await signInWithEmailAndPassword(auth, email, password);
-            if(user.uid.length>0){
+            if(user.emailVerified){
                 navigation.popToTop();
                 navigation.replace("Feed");
+            }
+            else{
+                alert("Please Verfiy email first.");
             }
             setloading(false);
         } 
@@ -36,6 +39,10 @@ export default function Login (props){
       const handleLogin = () => {
         loginUser();
     }
+
+    const goToSignUp = ()=>{
+        navigation.push("SignUp");
+      }
 
     return(
         <View style={styles.container} onLayout={onLayoutRootView}>
@@ -57,7 +64,7 @@ export default function Login (props){
                     <TextInput style={styles.textInputBox} placeholder='yourpassword' autoCapitalize="none"
                     secureTextEntry onChangeText={(text) => {setPassword(text); setError('')}} value={password} />
                 </View>
-                {error.length>0 && <Text style={{color:'red',textAlign:'center'}}>*{error}*</Text>}
+                {error.length>0 && <Text style={{fontFamily: 'DMMedium',color:'#510600',textAlign:'center'}}>{error}</Text>}
                 <TouchableOpacity style={styles.buttonFlexBox}
                     onPress={handleLogin}>
                     <FontAwesome name="user" size={24} color="#ffffff" />
@@ -67,7 +74,7 @@ export default function Login (props){
                 </TouchableOpacity>
                 <View style={styles.footerStyle}>
                 <Text style={styles.textInputText}>Don't have an account? 
-                    <Text style={styles.footerLink}>&nbsp; Sign up</Text>
+                    <Text style={styles.footerLink} onPress={goToSignUp}>&nbsp; Sign up</Text>
                 </Text>
                 </View>
             </View>

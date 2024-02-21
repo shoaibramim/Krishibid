@@ -1,49 +1,23 @@
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import React from 'react';
-import { FontAwesome, Entypo } from '@expo/vector-icons';
 
-const StarterScreen = (props) => {
+export default function Feed(props){
+    const {navigation,route} = props;
+    const onLayoutRootView = route.params.onLayoutRootView;
 
-  const {navigation,route} = props;
-  const onLayoutRootView = route.params.onLayoutRootView;
-
-  const goToClickOrSelectImage = ()=>{
-    navigation.push("ClickOrSelectImage");
-  }
-
-  const goToLogIn = ()=>{
-    navigation.push("Login");
-  }
-
-  return (
-    <View style={styles.starterScreen} onLayout={onLayoutRootView}>
-        <Image
-          style= {styles.logoStarterScreen}
-          contentFit= "cover"
-          source={require("../assets/Brand-logo.png")}
-        />
-        <TouchableOpacity style={styles.buttonFlexBox} onPress={goToClickOrSelectImage}>
-          <Entypo name="camera" size={30} color="#ffffff" />
-          <Text style={[styles.buttonText]}>Detect</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.buttonFlexBox]} onPress={goToLogIn}>
-          <FontAwesome name="user" size={30} color="#ffffff" />
-          <Text style={[styles.buttonText]}>Sign In</Text>
-        </TouchableOpacity>
-    
-    </View>
-  )
+     return(<View style={styles.container} onLayout={onLayoutRootView}>
+        <Text style={styles.textStyle}>
+            Feeeeeeeeeeeeeeed
+        </Text>
+    </View>)
 }
-
-export default StarterScreen;
-
 
 const styles = StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: '#BAE3BB',
       alignItems: 'center',
-      justifyContent: 'center',
+      //justifyContent: 'center',
     },
     logoStarterScreen: {
       maxWidth: "100%",
@@ -84,6 +58,14 @@ const styles = StyleSheet.create({
       fontWeight: "500",
       textAlign: "center",
       marginTop: 4
+  },
+  textStyle: {
+    fontFamily: 'DMBold',
+    fontSize: 50,
+    color: "#002D02",
+    padding: 10,
+    textAlign: 'center',
+
   },
    
   });

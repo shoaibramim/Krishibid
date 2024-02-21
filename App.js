@@ -8,6 +8,8 @@ import { NavigationContainer } from '@react-navigation/native';
 
 import StarterScreen from './pages/StarterScreen';
 import ClickOrSelectImage from './pages/ClickOrSelectImage';
+import Login from './pages/Login';
+import Feed from './pages/Feed';
 
 
 SplashScreen.preventAutoHideAsync();
@@ -40,6 +42,8 @@ export default function App() {
 
         <Stack.Screen name="StarterScreen" component={StarterScreen} options={{headerShown:false}} initialParams={{'onLayoutRootView':onLayoutRootView}} />
         <Stack.Screen name="ClickOrSelectImage" component={ClickOrSelectImage} options={{headerShown:false}} initialParams={{'onLayoutRootView':onLayoutRootView}}/>
+        <Stack.Screen name="Login" component={Login} options={{headerShown:false}} initialParams={{'onLayoutRootView':onLayoutRootView}}/>
+        <Stack.Screen name="Feed" component={Feed} options={{headerShown:false}} initialParams={{'onLayoutRootView':onLayoutRootView}}/>
 
 
       </Stack.Navigator>

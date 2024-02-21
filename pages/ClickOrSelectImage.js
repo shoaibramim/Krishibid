@@ -4,6 +4,43 @@ import { FontAwesome, Entypo } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { Camera } from 'expo-camera';
 import { BottomSheet, ListItem } from '@rneui/base';
+import * as tf from '@tensorflow/tfjs';
+import '@tensorflow/tfjs-react-native';
+import { confirmPasswordReset } from 'firebase/auth';
+
+async function initializeTF() {
+  await tf.setBackend('rn-webgl');
+  console.log('TensorFlow.js initialized');
+}
+async function loadModel(){
+  const model= await tf.loadGraphModel('./assets/trained_model/model.json');
+
+  return model;
+}
+async function preProcessImage(imageUri) {
+  try {
+    const imgB64 = await FileSystem.readAsStringAsync(imageUri, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+    const imgBuffer = tf.util.encodeString(imgB64, 'base64').buffer;
+    const raw = new Uint8Array(imgBuffer);
+    const imageTensor = decodeJpeg(raw);
+
+    return imageTensor;
+  } catch (error) {
+    console.error('Error preprocessing image:', error);
+    return null;
+  }
+}
+async function predictImage(model, image) {
+  try {
+    const prediction = await model.predict(image);
+    return prediction;
+  } catch (error) {
+    console.error('Error predicting image:', error);
+    return null;
+  }
+}
 
 
 const ClickOrSelectImage = (props) => {
@@ -14,6 +51,7 @@ const ClickOrSelectImage = (props) => {
   const [imageUri, setImageUri] = useState(null);
   const [bottomSheetStatus,setBottomSheetStatus] = useState(false);
   const [logoMargin, setLogoMargin] = useState(0);
+  const [prediction, setPrediction] = useState(null);
 
 
 
@@ -31,7 +69,7 @@ const ClickOrSelectImage = (props) => {
 
     if (!result.canceled) {
       setImageUri(result.assets[0].uri);
-      setBottomSheetStatus(true)
+      setBottomSheetStatus(true);
     }
   } else {
     alert('Camera permission not granted');
@@ -49,8 +87,18 @@ const ClickOrSelectImage = (props) => {
   
       if (!result.canceled) {
         setImageUri(result.assets[0].uri);
-        setBottomSheetStatus(true)
+        setBottomSheetStatus(true);
+
+        await initializeTF();
+      const model = await loadModel();
+      const processedImage= preProcessImage(imageUri);
+
+      if (processedImage) {
+        const predictionResult = await predictImage(model, processedImage);
+        setPrediction(predictionResult);
       }
+      console.log(prediction);
+    }
     }
     catch(error){
       console.log(error);
@@ -69,7 +117,9 @@ const ClickOrSelectImage = (props) => {
   
   useEffect(() => {
     changeLogoMargin()
-  }, [bottomSheetStatus])
+  }, [bottomSheetStatus]);
+
+
   
 
   return (
@@ -97,7 +147,7 @@ const ClickOrSelectImage = (props) => {
           </ListItem>
           <ListItem>
             <ListItem.Content style={styles.basicFlexStyle}> 
-             <Text style={styles.resultText}>Result will be shown here.</Text>
+             <Text style={styles.resultText}>Result will be shown here. {prediction}</Text>
             </ListItem.Content>
           </ListItem>
           <ListItem >

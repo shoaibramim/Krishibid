@@ -2,8 +2,6 @@ import { View, Text, Image, TouchableOpacity, StyleSheet, ActivityIndicator } fr
 import React, {useState} from 'react';
 import { FontAwesome, Entypo, AntDesign } from '@expo/vector-icons';
 import {auth, db} from '../firebase';
-import { signOut } from 'firebase/auth';
-import { setLogLevel } from 'firebase/app';
 
 export default function Feed(props){
     const {navigation,route} = props;

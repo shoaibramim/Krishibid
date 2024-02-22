@@ -30,10 +30,16 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#BAE3BB"
-      }
+      },
+      "package": "com.shoaibramim.Krishibid"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "90ae465b-a3eb-40ee-9c83-33016e9147ad"
+      }
     }
   }
 }

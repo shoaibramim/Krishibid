@@ -39,13 +39,13 @@ export default function App() {
   return (
 
     <NavigationContainer>
-      <Stack.Navigator>
+      <Stack.Navigator initialRouteName='StarterScreen' screenOptions={{headerShown: false}} >
 
-        <Stack.Screen name="StarterScreen" component={StarterScreen} options={{headerShown:false}} initialParams={{'onLayoutRootView':onLayoutRootView}} />
-        <Stack.Screen name="ClickOrSelectImage" component={ClickOrSelectImage} options={{headerShown:false}} initialParams={{'onLayoutRootView':onLayoutRootView}}/>
-        <Stack.Screen name="Login" component={Login} options={{headerShown:false}} initialParams={{'onLayoutRootView':onLayoutRootView}}/>
-        <Stack.Screen name="Feed" component={Feed} options={{headerShown:false}} initialParams={{'onLayoutRootView':onLayoutRootView}}/>
-        <Stack.Screen name="SignUp" component={SignUp} options={{headerShown:false}} initialParams={{'onLayoutRootView':onLayoutRootView}}/>
+        <Stack.Screen name="StarterScreen" component={StarterScreen} initialParams={{'onLayoutRootView':onLayoutRootView}} />
+        <Stack.Screen name="ClickOrSelectImage" component={ClickOrSelectImage} initialParams={{'onLayoutRootView':onLayoutRootView}}/>
+        <Stack.Screen name="Login" component={Login} initialParams={{'onLayoutRootView':onLayoutRootView}}/>
+        <Stack.Screen name="Feed" component={Feed} initialParams={{'onLayoutRootView':onLayoutRootView}}/>
+        <Stack.Screen name="SignUp" component={SignUp} initialParams={{'onLayoutRootView':onLayoutRootView}}/>
 
       </Stack.Navigator>
     </NavigationContainer>

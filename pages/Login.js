@@ -21,7 +21,7 @@ export default function Login(props) {
             const { user } = await signInWithEmailAndPassword(auth, email, password);
             if (user.emailVerified) {
                 navigation.popToTop();
-                navigation.replace("Feed");
+                navigation.replace("BottomTabs");
             }
             else {
                 alert("Please Verfiy email first.");

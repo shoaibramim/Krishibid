@@ -2,44 +2,21 @@ import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import { FontAwesome, Entypo } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { Camera } from 'expo-camera';
 import { BottomSheet, ListItem } from '@rneui/base';
 import Animated, { FadeInUp, FadeInDown, FadeInRight, FadeInLeft } from 'react-native-reanimated';
 import * as tf from '@tensorflow/tfjs';
-import '@tensorflow/tfjs-react-native';
+import {bundleResourceIO} from '@tensorflow/tfjs-react-native';
 
-async function initializeTF() {
-  await tf.setBackend('rn-webgl');
-  console.log('TensorFlow.js initialized');
-}
-async function loadModel() {
-  const model = await tf.loadGraphModel('./assets/trained_model/model.json');
+const modelJson = require("../assets/trained_model/model.json");
+const modelWeights = require("../assets/trained_model/weights.bin");
 
-  return model;
-}
 async function preProcessImage(imageUri) {
-  try {
-    const imgB64 = await FileSystem.readAsStringAsync(imageUri, {
-      encoding: FileSystem.EncodingType.Base64,
-    });
-    const imgBuffer = tf.util.encodeString(imgB64, 'base64').buffer;
-    const raw = new Uint8Array(imgBuffer);
-    const imageTensor = decodeJpeg(raw);
-
-    return imageTensor;
-  } catch (error) {
-    console.error('Error preprocessing image:', error);
-    return null;
-  }
-}
-async function predictImage(model, image) {
-  try {
-    const prediction = await model.predict(image);
-    return prediction;
-  } catch (error) {
-    console.error('Error predicting image:', error);
-    return null;
-  }
+  const f = ((4 - 3) / 2) / 4;
+  //const processedImage = tf.image.cropAndResize(imageUri, tf.tensor2d([f, 0, (1 - f), 1], [0], [224, 224]));
+  //const processedImage = tf.image.resizeBilinear(imageUri, [224, 224]);
+  const decodeImage= tf.image.decode_jpeg(imageUri);
+  const processedImage= tf.image.resize(decodeImage, [224,224]);
+  return processedImage;
 }
 
 
@@ -52,11 +29,11 @@ const ClickOrSelectImage = (props) => {
   const [bottomSheetStatus, setBottomSheetStatus] = useState(false);
   const [logoMargin, setLogoMargin] = useState(0);
   const [prediction, setPrediction] = useState(null);
-
-
+  const [model, setModel] = useState();
+  const [tfReady, setTfReady] = useState(false);
 
   const openCamera = async () => {
-    const { status } = await Camera.requestCameraPermissionsAsync();
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
     const { status: mediaPermissionStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (status === 'granted' && mediaPermissionStatus === 'granted') {
@@ -89,15 +66,18 @@ const ClickOrSelectImage = (props) => {
         setImageUri(result.assets[0].uri);
         setBottomSheetStatus(true);
 
-        await initializeTF();
-        const model = await loadModel();
-        const processedImage = preProcessImage(imageUri);
+        await tf.ready();
 
-        if (processedImage) {
-          const predictionResult = await predictImage(model, processedImage);
-          setPrediction(predictionResult);
-        }
-        console.log(prediction);
+        const model = await tf.loadLayersModel(bundleResourceIO(modelJson, modelWeights));
+        setModel(model);
+        //console.log(model);
+        setTfReady(true);
+
+        const processedImage = preProcessImage(imageUri);
+        const predictionSet= model.predict(processedImage);
+        const logits= predictionSet.dataSync();
+
+        console.log(logits);
       }
     }
     catch (error) {
@@ -153,7 +133,7 @@ const ClickOrSelectImage = (props) => {
         </ListItem>
         <ListItem>
           <ListItem.Content style={styles.basicFlexStyle}>
-            <Text style={styles.resultText}>Result will be shown here. {prediction}</Text>
+            <Text style={styles.resultText}>Result will be shown here.</Text>
           </ListItem.Content>
         </ListItem>
         <ListItem >

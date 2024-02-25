@@ -5,19 +5,34 @@ import * as ImagePicker from 'expo-image-picker';
 import { BottomSheet, ListItem } from '@rneui/base';
 import Animated, { FadeInUp, FadeInDown, FadeInRight, FadeInLeft } from 'react-native-reanimated';
 import * as tf from '@tensorflow/tfjs';
-import {bundleResourceIO} from '@tensorflow/tfjs-react-native';
+import * as FileSystem from 'expo-file-system';
+import {bundleResourceIO, decodeJpeg} from '@tensorflow/tfjs-react-native';
 
 const modelJson = require("../assets/trained_model/model.json");
 const modelWeights = require("../assets/trained_model/weights.bin");
 
-async function preProcessImage(imageUri) {
-  const f = ((4 - 3) / 2) / 4;
-  //const processedImage = tf.image.cropAndResize(imageUri, tf.tensor2d([f, 0, (1 - f), 1], [0], [224, 224]));
-  //const processedImage = tf.image.resizeBilinear(imageUri, [224, 224]);
-  const decodeImage= tf.image.decode_jpeg(imageUri);
-  const processedImage= tf.image.resize(decodeImage, [224,224]);
-  return processedImage;
-}
+// async function preProcessImage(imageUri) {
+//   const f = ((4 - 3) / 2) / 4;
+//   //const processedImage = tf.image.cropAndResize(imageUri, tf.tensor2d([f, 0, (1 - f), 1], [0], [224, 224]));
+//   //const processedImage = tf.image.resizeBilinear(imageUri, [224, 224]);
+//   const decodeImage= tf.image.decode_jpeg(imageUri);
+//   const processedImage= tf.image.resize(decodeImage, [224,224]);
+//   return processedImage;
+// }
+
+const loadAndPreprocessImage = async (uri) => {
+  const response = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+  const imageData = tf.util.decodeString(response, 'base64');
+  const imageTensor = decodeJpeg(imageData);
+
+  // Preprocess the image based on your model's requirements
+  // This might involve resizing, normalization, etc.
+  const preprocessedTensor = tf.image.resizeBilinear(imageTensor, [224, 224]);
+  const normalizedTensor = preprocessedTensor.div(255.0);
+
+  return normalizedTensor;
+};
+
 
 
 const ClickOrSelectImage = (props) => {
@@ -73,8 +88,10 @@ const ClickOrSelectImage = (props) => {
         //console.log(model);
         setTfReady(true);
 
-        const processedImage = preProcessImage(imageUri);
-        const predictionSet= model.predict(processedImage);
+        //const processedImage = preProcessImage(imageUri);
+        const imageTensor= await loadAndPreprocessImage(imageUri);
+        const predictionSet= model.predict(imageTensor);
+        console.log(predictionSet);
         const logits= predictionSet.dataSync();
 
         console.log(logits);

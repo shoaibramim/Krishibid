@@ -1,5 +1,6 @@
 
 import React from "react";
+import { Image, TouchableOpacity } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { FontAwesome, Entypo, Ionicons } from "@expo/vector-icons";
 
@@ -9,11 +10,24 @@ import Search from "./Search";
 import CreatePost from "./CreatePost";
 import Notifications from "./Notifications";
 
+function LogoTitle() {
+  return (
+    <Image
+      style={{ width: 100, height: 60, marginTop: 10, justifyContent: 'center' }}
+      source={require('../assets/Brand-logo.png')}
+    />
+  );
+}
+
 export default function BottomTabs(props) {
   const { navigation, route } = props;
   const onLayoutRootView = route.params.onLayoutRootView;
 
   const Tab = createBottomTabNavigator();
+
+  const goToAbout = () => {
+    navigation.push("About");
+}
 
   return (
     <Tab.Navigator
@@ -34,6 +48,10 @@ export default function BottomTabs(props) {
         component={Feed}
         initialParams={{onLayoutRootView: onLayoutRootView}}
         options={{
+          headerShown: true,
+          headerTitle: (props)=> <LogoTitle {...props} />,
+          headerRight:()=> (<TouchableOpacity style={{paddingHorizontal: 15, marginTop: 10, justifyContent: 'center'}} onPress={goToAbout}><Entypo name="info-with-circle" size={30} color="#002D02" /></TouchableOpacity>),
+          headerStyle: {backgroundColor: '#BAE3BB',},
           tabBarLabel: "Home",
           tabBarIcon: ({ color, size }) => (
             <Entypo name="home" size={size} color={color} />

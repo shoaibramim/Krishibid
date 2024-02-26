@@ -16,7 +16,7 @@ import {
 import React, { useEffect, useState } from "react";
 import { WebView } from "react-native-webview";
 import MapView, { Marker } from "react-native-maps";
-import * as Location from 'expo-location';
+import * as Location from "expo-location";
 import { FontAwesome, Entypo, Ionicons, AntDesign } from "@expo/vector-icons";
 import firebase from "firebase/app";
 import { db } from "../firebase";
@@ -39,6 +39,7 @@ export default function About(props) {
   const onLayoutRootView = route.params.onLayoutRootView;
 
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isModal2Visible, setIsModal2Visible] = useState(false);
 
   const [currentLocation, setCurrentLocation] = useState(null);
   const [initialRegion, setInitialRegion] = useState(null);
@@ -75,18 +76,35 @@ export default function About(props) {
             images. (Based on common Bangladeshi crops)
           </Text>
         </View>
-        <View>
+        <View
+          style={{
+            alignItems: "center",
+            alignContent: "center",
+            justifyContent: "center",
+          }}
+        >
           <Text style={styles.textHeadline}>Machine Learning Basics</Text>
-          <WebView
-            style={styles.videoPlayer}
-            javaScriptEnabled={true}
-            source={{
-              uri: "https://www.youtube.com/embed/ukzFI9rgwfU?si=iH4ggdur47i1CXr8",
+          <View
+            style={{
+              borderWidth: 2,
+              borderRadius: 6,
+              borderColor: "#002D02",
+              overflow: "hidden",
+              height: 200,
+              width: Dimensions.get("window").width-20,
             }}
-          />
+          >
+            <WebView
+              style={styles.videoPlayer}
+              javaScriptEnabled={true}
+              source={{
+                uri: "https://www.youtube.com/embed/ukzFI9rgwfU?si=iH4ggdur47i1CXr8",
+              }}
+            />
+          </View>
         </View>
         <View>
-          <View style={{ flexDirection: "row", margin: 10 }}>
+          <View style={{ flexDirection: "row", marginTop: 10 }}>
             <Text
               style={{
                 fontFamily: "DMBold",
@@ -160,7 +178,7 @@ export default function About(props) {
           </Modal>
         </View>
         <View>
-          <View style={{ flexDirection: "row", margin: 10 }}>
+          <View style={{ flexDirection: "row", marginTop: 10 }}>
             <Text
               style={{
                 fontFamily: "DMBold",
@@ -170,19 +188,19 @@ export default function About(props) {
                 textAlign: "left",
               }}
             >
-              Test Your Location:
+              Check Your Location:
             </Text>
             <TouchableOpacity
               style={styles.buttonFlexBox}
               onPress={() => {
-                setIsModalVisible(true);
+                setIsModal2Visible(true);
               }}
             >
               <Entypo name="location" size={24} color="white" />
             </TouchableOpacity>
           </View>
           <Modal
-            visible={isModalVisible}
+            visible={isModal2Visible}
             animationType="slide"
             transparent={true}
           >
@@ -196,19 +214,19 @@ export default function About(props) {
               }}
             >
               <View style={styles.modalContainer}>
-              {initialRegion && (
-        <MapView style={styles.mapView} initialRegion={initialRegion}>
-          {currentLocation && (
-            <Marker
-              coordinate={{
-                latitude: currentLocation.latitude,
-                longitude: currentLocation.longitude,
-              }}
-              title="Your Location"
-            />
-          )}
-        </MapView>
-      )}
+                {initialRegion && (
+                  <MapView style={styles.mapView} initialRegion={initialRegion}>
+                    {currentLocation && (
+                      <Marker
+                        coordinate={{
+                          latitude: currentLocation.latitude,
+                          longitude: currentLocation.longitude,
+                        }}
+                        title="Your Location"
+                      />
+                    )}
+                  </MapView>
+                )}
               </View>
               <TouchableOpacity
                 style={{
@@ -224,7 +242,7 @@ export default function About(props) {
                   padding: 10,
                 }}
                 onPress={() => {
-                  setIsModalVisible(false);
+                  setIsModal2Visible(false);
                 }}
               >
                 <AntDesign name="closecircle" size={24} color="white" />
@@ -299,12 +317,12 @@ const styles = StyleSheet.create({
     textAlign: "left",
   },
   videoPlayer: {
+    backgroundColor: "#002D02",
     height: 200,
-    width: Dimensions.get("window").width - 30,
+    width: Dimensions.get("window").width - 20,
     alignItems: "center",
     alignContent: "center",
     justifyContent: "center",
-    marginHorizontal: 10,
   },
   mapView: {
     marginHorizontal: 0,

@@ -1,4 +1,11 @@
-import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+} from "react-native";
 import React, { useState, useEffect } from "react";
 import { FontAwesome, Entypo } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
@@ -11,25 +18,51 @@ import Animated, {
 } from "react-native-reanimated";
 import * as tf from "@tensorflow/tfjs";
 import * as FileSystem from "expo-file-system";
-import { bundleResourceIO, decodeJpeg } from "@tensorflow/tfjs-react-native";
+import {
+  bundleResourceIO,
+  decodeJpeg,
+  fetch,
+} from "@tensorflow/tfjs-react-native";
+import * as ImageManipulator from "expo-image-manipulator";
 
 const modelJson = require("../assets/trained_model/model.json");
 const modelWeights = require("../assets/trained_model/weights.bin");
 
+const datasetClasses = [
+  "Invalid",
+  "Corn_Common_Rust",
+  "Corn_Gray_Leaf_Spot",
+  "Corn_Healthy",
+  "Corn_Northern_Leaf_Blight",
+  "Potato_Early_Blight",
+  "Potato_Healthy",
+  "Potato_Late_Blight",
+  "Rice_Brown_Spot",
+  "Rice_Healthy",
+  "Rice_Leaf_Blast",
+  "Rice_Neck_Blast",
+  "Wheat_Brown_Rust",
+  "Wheat_Healty",
+  "Wheat_Yellow_Rust",
+];
 
-async function preProcessImage(imageUri) {
-  const imgB64 = await FileSystem.readAsStringAsync(imageUri, {
+const transformImageToTensor = async (uri) => {
+  //read the image as base64
+  const img64 = await FileSystem.readAsStringAsync(uri, {
     encoding: FileSystem.EncodingType.Base64,
   });
-  const imgBuffer = tf.util.encodeString(imgB64, "base64").buffer;
+  const imgBuffer = tf.util.encodeString(img64, "base64").buffer;
   const raw = new Uint8Array(imgBuffer);
-  const imageTensor = decodeJpeg(raw);
-
-  //const preprocessedTensor = tf.image.resizeBilinear(imageTensor, [224, 224]);
-  //const normalizedTensor = preprocessedTensor.div(255.0);
-
-  return preprocessedTensor;
-}
+  let imgTensor = decodeJpeg(raw);
+  const scalar = tf.scalar(255);
+  //resize the image
+  imgTensor = tf.image.resizeNearestNeighbor(imgTensor, [224, 224]);
+  //normalize; if a normalization layer is in the model, this step can be skipped
+  const tensorScaled = imgTensor.div(scalar);
+  //final shape of the tensor
+  const img = tf.reshape(tensorScaled, [1, 224, 224, 3]);
+  return img;
+};
 
 const ClickOrSelectImage = (props) => {
   const { navigation, route } = props;
@@ -41,6 +74,7 @@ const ClickOrSelectImage = (props) => {
   const [prediction, setPrediction] = useState(null);
   const [model, setModel] = useState();
   const [tfReady, setTfReady] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const openCamera = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
@@ -58,6 +92,21 @@ const ClickOrSelectImage = (props) => {
       if (!result.canceled) {
         setImageUri(result.assets[0].uri);
         setBottomSheetStatus(true);
+
+        setLoading(true);
+        await tf.ready();
+        const model = await tf.loadLayersModel(
+          bundleResourceIO(modelJson, modelWeights)
+        );
+        setModel(model);
+        setTfReady(true);
+
+        const imageTensor = await transformImageToTensor(imageUri);
+        const predictions = model.predict(imageTensor);
+        const highestPredictionIndex = predictions.argMax(1).dataSync();
+        setPrediction(`${datasetClasses[highestPredictionIndex]}`);
+        console.log(prediction);
+        setLoading(false);
       }
     } else {
       alert("Camera permission not granted");
@@ -69,7 +118,7 @@ const ClickOrSelectImage = (props) => {
       let result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
-        aspect: [4, 4],
+        aspect: [3, 4],
         quality: 1,
       });
 
@@ -77,22 +126,20 @@ const ClickOrSelectImage = (props) => {
         setImageUri(result.assets[0].uri);
         setBottomSheetStatus(true);
 
+        setLoading(true);
         await tf.ready();
-
         const model = await tf.loadLayersModel(
           bundleResourceIO(modelJson, modelWeights)
         );
         setModel(model);
-        //console.log(model);
         setTfReady(true);
 
-        const imageTensor = preProcessImage(imageUri);
-
-        const predictionSet = model.predict(imageTensor);
-        console.log(predictionSet);
-        const logits = predictionSet.dataSync();
-
-        console.log(logits);
+        const imageTensor = await transformImageToTensor(imageUri);
+        const predictions = model.predict(imageTensor);
+        const highestPredictionIndex = predictions.argMax(1).dataSync();
+        setPrediction(`${datasetClasses[highestPredictionIndex]}`);
+        console.log(prediction);
+        setLoading(false);
       }
     } catch (error) {
       console.log(error);
@@ -156,7 +203,13 @@ const ClickOrSelectImage = (props) => {
         </ListItem>
         <ListItem>
           <ListItem.Content style={styles.basicFlexStyle}>
-            <Text style={styles.resultText}>Result will be shown here.</Text>
+            <Text style={styles.resultText}>
+              {loading ? (
+                <ActivityIndicator size={24} color={"#002D02"} />
+              ) : (
+                prediction
+              )}
+            </Text>
           </ListItem.Content>
         </ListItem>
         <ListItem>

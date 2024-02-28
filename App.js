@@ -62,7 +62,7 @@ export default function App() {
         <Stack.Screen
           name="BottomTabs"
           component={BottomTabs}
-          initialParams={{onLayoutRootView: onLayoutRootView}}
+          initialParams={{ onLayoutRootView: onLayoutRootView }}
         />
         <Stack.Screen
           name="Feed"

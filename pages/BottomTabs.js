@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Image, TouchableOpacity } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
@@ -13,8 +12,13 @@ import Notifications from "./Notifications";
 function LogoTitle() {
   return (
     <Image
-      style={{ width: 100, height: 60, marginTop: 10, justifyContent: 'center' }}
-      source={require('../assets/Brand-logo.png')}
+      style={{
+        width: 100,
+        height: 60,
+        marginTop: 10,
+        justifyContent: "center",
+      }}
+      source={require("../assets/Brand-logo.png")}
     />
   );
 }
@@ -27,7 +31,7 @@ export default function BottomTabs(props) {
 
   const goToAbout = () => {
     navigation.push("About");
-}
+  };
 
   return (
     <Tab.Navigator
@@ -36,22 +40,33 @@ export default function BottomTabs(props) {
         headerShown: false,
         tabBarShowLabel: false,
         tabBarHideOnKeyboard: true,
-        tabBarActiveBackgroundColor: '#ffffff',
-        tabBarInactiveBackgroundColor: '#ffffff',
+        tabBarActiveBackgroundColor: "#ffffff",
+        tabBarInactiveBackgroundColor: "#ffffff",
         tabBarActiveTintColor: "#002D02",
         tabBarInactiveTintColor: "grey",
-        tabBarStyle: { position: 'absolute', height: 60, },
+        tabBarStyle: { position: "absolute", height: 60 },
       }}
     >
       <Tab.Screen
         name="Feed"
         component={Feed}
-        initialParams={{onLayoutRootView: onLayoutRootView}}
+        initialParams={{ onLayoutRootView: onLayoutRootView }}
         options={{
           headerShown: true,
-          headerTitle: (props)=> <LogoTitle {...props} />,
-          headerRight:()=> (<TouchableOpacity style={{paddingHorizontal: 15, marginTop: 10, justifyContent: 'center'}} onPress={goToAbout}><Entypo name="info-with-circle" size={30} color="#002D02" /></TouchableOpacity>),
-          headerStyle: {backgroundColor: '#BAE3BB',},
+          headerTitle: (props) => <LogoTitle {...props} />,
+          headerRight: () => (
+            <TouchableOpacity
+              style={{
+                paddingHorizontal: 15,
+                marginTop: 10,
+                justifyContent: "center",
+              }}
+              onPress={goToAbout}
+            >
+              <Entypo name="info-with-circle" size={30} color="#002D02" />
+            </TouchableOpacity>
+          ),
+          headerStyle: { backgroundColor: "#BAE3BB" },
           tabBarLabel: "Home",
           tabBarIcon: ({ color, size }) => (
             <Entypo name="home" size={size} color={color} />
@@ -61,7 +76,7 @@ export default function BottomTabs(props) {
       <Tab.Screen
         name="Search"
         component={Search}
-        initialParams={{onLayoutRootView: onLayoutRootView}}
+        initialParams={{ onLayoutRootView: onLayoutRootView }}
         options={{
           tabBarLabel: "Search",
           tabBarIcon: ({ color, size }) => (
@@ -72,7 +87,7 @@ export default function BottomTabs(props) {
       <Tab.Screen
         name="CreatePost"
         component={CreatePost}
-        initialParams={{onLayoutRootView: onLayoutRootView}}
+        initialParams={{ onLayoutRootView: onLayoutRootView }}
         options={{
           tabBarLabel: "Create",
           tabBarIcon: ({ color, size }) => (
@@ -83,7 +98,7 @@ export default function BottomTabs(props) {
       <Tab.Screen
         name="Notifications"
         component={Notifications}
-        initialParams={{onLayoutRootView: onLayoutRootView}}
+        initialParams={{ onLayoutRootView: onLayoutRootView }}
         options={{
           tabBarLabel: "Notifications",
           tabBarIcon: ({ color, size }) => (
@@ -94,7 +109,7 @@ export default function BottomTabs(props) {
       <Tab.Screen
         name="Profile"
         component={Profile}
-        initialParams={{onLayoutRootView: onLayoutRootView}}
+        initialParams={{ onLayoutRootView: onLayoutRootView }}
         options={{
           tabBarLabel: "Profile",
           tabBarIcon: ({ color, size }) => (

@@ -12,7 +12,7 @@ const firebaseConfig = {
   projectId: "krishibid-react-native",
   storageBucket: "krishibid-react-native.appspot.com",
   messagingSenderId: "1053414041759",
-  appId: "1:1053414041759:web:97535c50a191ccedc2daaa"
+  appId: "1:1053414041759:web:97535c50a191ccedc2daaa",
 };
 
 // Initialize Firebase

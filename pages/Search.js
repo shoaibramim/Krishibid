@@ -1,15 +1,15 @@
 import {
-    View,
-    Text,
-    Image,
-    TouchableOpacity,
-    StyleSheet,
-    ActivityIndicator,
-  } from "react-native";
-  import React, { useState } from "react";
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+} from "react-native";
+import React, { useState } from "react";
 
 export default function Search(props) {
-    const { navigation, route } = props;
+  const { navigation, route } = props;
   const onLayoutRootView = route.params.onLayoutRootView;
 
   return (

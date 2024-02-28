@@ -1,16 +1,16 @@
 import {
-    View,
-    Text,
-    Image,
-    TouchableOpacity,
-    StyleSheet,
-    ActivityIndicator,
-  } from "react-native";
-  import React, { useState } from "react";
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+} from "react-native";
+import React, { useState } from "react";
 
 export default function Notifications(props) {
-    const { navigation, route } = props;
-    const onLayoutRootView = route.params.onLayoutRootView;
+  const { navigation, route } = props;
+  const onLayoutRootView = route.params.onLayoutRootView;
 
   return (
     <View style={styles.container} onLayout={onLayoutRootView}>

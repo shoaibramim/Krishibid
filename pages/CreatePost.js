@@ -1,18 +1,18 @@
 import {
-    View,
-    Text,
-    Image,
-    TouchableOpacity,
-    StyleSheet,
-    ActivityIndicator,
-  } from "react-native";
-  import React, { useState } from "react";
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+} from "react-native";
+import React, { useState } from "react";
 
 export default function CreatePost(props) {
-    const { navigation, route } = props;
+  const { navigation, route } = props;
   const onLayoutRootView = route.params.onLayoutRootView;
 
- return (
+  return (
     <View style={styles.container} onLayout={onLayoutRootView}>
       <Text style={styles.textStyle}>Create Post</Text>
     </View>

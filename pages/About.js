@@ -91,7 +91,7 @@ export default function About(props) {
               borderColor: "#002D02",
               overflow: "hidden",
               height: 200,
-              width: Dimensions.get("window").width-20,
+              width: Dimensions.get("window").width - 20,
             }}
           >
             <WebView

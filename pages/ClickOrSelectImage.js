@@ -101,7 +101,7 @@ const ClickOrSelectImage = (props) => {
         setModel(model);
         setTfReady(true);
 
-        const imageTensor = await transformImageToTensor(imageUri);
+        const imageTensor = await transformImageToTensor(result.assets[0].uri);
         const predictions = model.predict(imageTensor);
         const highestPredictionIndex = predictions.argMax(1).dataSync();
         setPrediction(`${datasetClasses[highestPredictionIndex]}`);
@@ -134,7 +134,7 @@ const ClickOrSelectImage = (props) => {
         setModel(model);
         setTfReady(true);
 
-        const imageTensor = await transformImageToTensor(imageUri);
+        const imageTensor = await transformImageToTensor(result.assets[0].uri);
         const predictions = model.predict(imageTensor);
         const highestPredictionIndex = predictions.argMax(1).dataSync();
         setPrediction(`${datasetClasses[highestPredictionIndex]}`);

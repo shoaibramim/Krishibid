@@ -17,6 +17,7 @@ import Search from "./pages/Search";
 import CreatePost from "./pages/CreatePost";
 import Notifications from "./pages/Notifications";
 import About from "./pages/About";
+import EditProfile from "./pages/EditProfile";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -97,6 +98,11 @@ export default function App() {
         <Stack.Screen
           name="About"
           component={About}
+          initialParams={{ onLayoutRootView: onLayoutRootView }}
+        />
+        <Stack.Screen
+          name="EditProfile"
+          component={EditProfile}
           initialParams={{ onLayoutRootView: onLayoutRootView }}
         />
       </Stack.Navigator>

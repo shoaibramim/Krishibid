@@ -141,13 +141,6 @@ const styles = StyleSheet.create({
     marginTop: 20,
     padding: 10,
   },
-  profilePic: {
-    borderRadius: 100,
-    borderWidth: 3,
-    borderColor: "#002D02",
-    height: 120,
-    width: 120,
-  },
   editProfilePic: {
     backgroundColor: "#002D02",
     borderRadius: 20,

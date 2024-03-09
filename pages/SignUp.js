@@ -271,11 +271,11 @@ export default function SignUp(props) {
                 const month = date.getMonth();
                 const year = date.getFullYear();
 
-                const formattedDate = `${day.toString().padStart(2, "0")}/${(
+                const formattedDate = `${day.toString().padStart(2, "0")}-${(
                   month + 1
                 )
                   .toString()
-                  .padStart(2, "0")}/${year.toString()}`;
+                  .padStart(2, "0")}-${year.toString()}`;
 
                 setBirthDate(formattedDate);
                 setBirthDateModalStatus(false);
@@ -416,15 +416,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginHorizontal: 20,
   },
-  birthDate: {
-    margin: 10,
-    fontFamily: "DMRegular",
-    alignContent: "center",
-    alignItems: "center",
-    justifyContent: "center",
-    color: "#002D02",
-    fontSize: 16,
-  },
   textInputBox: {
     fontFamily: "DMRegular",
     height: 40,
@@ -436,6 +427,15 @@ const styles = StyleSheet.create({
     marginBottom: 5,
     marginHorizontal: 10,
     paddingLeft: 10,
+  },
+  birthDate: {
+    margin: 10,
+    fontFamily: "DMRegular",
+    alignContent: "center",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "#002D02",
+    fontSize: 16,
   },
   birthdayPicker: {
     height: 48,

@@ -97,6 +97,12 @@ export default function SignUp(props) {
         joiningDate: Timestamp.fromDate(new Date()),
         dob: birthDate,
         user_id: "",
+        educationalInstitute: "N/A",
+        location: {
+          country: "N/A",
+          state: "N/A",
+          district: "N/A"
+        }
       });
 
       updateDoc(doc(db, "users", docRef.id), { user_id: docRef.id });

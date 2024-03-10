@@ -7,7 +7,7 @@ import {
   ActivityIndicator,
   ImageBackground,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   FontAwesome,
   Entypo,
@@ -17,11 +17,59 @@ import {
   FontAwesome5,
 } from "@expo/vector-icons";
 import { auth, db } from "../firebase";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import moment from "moment";
 
 export default function Profile(props) {
   const { navigation, route } = props;
   const onLayoutRootView = route.params.onLayoutRootView;
+
   const [loading, setloading] = useState(false);
+  const [userInfo, setUserInfo] = useState({});
+  const [newImageUri, setnewImageUri] = useState(null);
+  const [imageUri, setImageUri] = useState(null);
+
+  useEffect(() => {
+    const getUser = async () => {
+      const userData = await AsyncStorage.getItem("userData");
+      if (userData) {
+        const user = JSON.parse(userData);
+        setUserInfo(user);
+      } else {
+        const usersRef = collection(db, "users");
+        const q = query(usersRef, where("email", "==", auth.currentUser.email));
+        const querySnapshot = await getDocs(q);
+        querySnapshot.forEach((doc) => {
+          const userData = doc.data();
+          setUserInfo(userData);
+        });
+      }
+    };
+    getUser();
+  }, []);
+
+  const storageBucket = "krishibid-react-native.appspot.com";
+
+  const getImageUrlToShow = (image) => {
+    const imageUrl = `https://firebasestorage.googleapis.com/v0/b/${storageBucket}/o/${encodeURIComponent(
+      image
+    )}?alt=media`;
+
+    return imageUrl;
+  };
+
+  const preFetchDP = (userProfilePic) => {
+    const imageRef = getImageUrlToShow(userProfilePic);
+    setImageUri(imageRef);
+    setnewImageUri(imageRef);
+  };
+
+  useEffect(() => {
+    if (Object.keys(userInfo).length > 0) {
+      preFetchDP(userInfo.profile_url);
+    }
+  }, [userInfo]);
 
   const handleSignOut = () => {
     setloading(true);
@@ -45,7 +93,7 @@ export default function Profile(props) {
               borderWidth: 3,
               borderColor: "#002D02",
             }}
-            source={require("../assets/ThomasShelby Square.jpg")}
+            source={{ uri: imageUri }}
           >
             <View style={styles.editProfilePic}>
               <Entypo name="camera" size={24} color="white" />
@@ -53,10 +101,19 @@ export default function Profile(props) {
           </ImageBackground>
         </TouchableOpacity>
 
-        <Text style={styles.profileName}>Thomas Shelby</Text>
-        <Text style={styles.profileUsername}>@tommyshelby</Text>
+        <Text style={styles.profileName}>
+          {Object.keys(userInfo).length > 0
+            ? userInfo.firstName + " " + userInfo.lastName
+            : ""}
+        </Text>
+        <Text style={styles.profileUsername}>
+          {Object.keys(userInfo).length > 0 ? `@${userInfo.username}` : ""}
+        </Text>
         <View style={{ flexDirection: "row", padding: 5 }}>
-          <TouchableOpacity style={styles.buttonFlexBox} onPress={goToEditProfile}>
+          <TouchableOpacity
+            style={styles.buttonFlexBox}
+            onPress={goToEditProfile}
+          >
             <MaterialCommunityIcons name="pencil" size={18} color="white" />
             <Text style={styles.buttonText}>
               {loading ? (
@@ -84,25 +141,33 @@ export default function Profile(props) {
       <View style={styles.detailStyle}>
         <View style={{ flexDirection: "row", paddingBottom: 5, gap: 17 }}>
           <MaterialIcons name="location-pin" size={20} color="#002D02" />
-          <Text style={styles.detailTextStyle}>Birmingham, England</Text>
+          <Text style={styles.detailTextStyle}>
+            {Object.keys(userInfo).length > 0
+              ? userInfo.location.district + ", " + userInfo.location.state
+              : ""}
+          </Text>
         </View>
         <View style={{ flexDirection: "row", paddingBottom: 5, gap: 10 }}>
           <FontAwesome name="graduation-cap" size={20} color="#002D02" />
           <Text style={styles.detailTextStyle}>
-            Military Academy, Birmingham
+            {Object.keys(userInfo).length > 0
+              ? userInfo.educationalInstitute
+              : ""}
           </Text>
         </View>
         <View style={{ flexDirection: "row", paddingBottom: 5, gap: 15 }}>
           <FontAwesome name="birthday-cake" size={20} color="#002D02" />
-          <Text style={styles.detailTextStyle}>25 May, 1890</Text>
+          <Text style={styles.detailTextStyle}>
+            {Object.keys(userInfo).length > 0 ? userInfo.dob : ""}
+          </Text>
         </View>
         <View style={{ flexDirection: "row", paddingBottom: 5, gap: 10 }}>
           <FontAwesome5 name="user-clock" size={20} color="#002D02" />
-          <Text style={styles.detailTextStyle}>Joined 93 years ago</Text>
+          <Text style={styles.detailTextStyle}>Joined: </Text>
         </View>
       </View>
       <View style={styles.postContainer}>
-      <Text style={styles.recentPostsText}>Recent Posts</Text>
+        <Text style={styles.recentPostsText}>Recent Posts</Text>
       </View>
     </View>
   );

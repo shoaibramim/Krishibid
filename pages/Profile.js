@@ -18,8 +18,16 @@ import {
 } from "@expo/vector-icons";
 import { auth, db } from "../firebase";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  query,
+  where,
+  Timestamp,
+} from "firebase/firestore";
 import moment from "moment";
+import * as ImagePicker from "expo-image-picker";
+import { BottomSheet, ListItem } from "@rneui/base";
 
 export default function Profile(props) {
   const { navigation, route } = props;
@@ -29,6 +37,8 @@ export default function Profile(props) {
   const [userInfo, setUserInfo] = useState({});
   const [newImageUri, setnewImageUri] = useState(null);
   const [imageUri, setImageUri] = useState(null);
+  const [formattedDate, setFormattedDate] = useState(null);
+  const [bottomSheetStatus, setBottomSheetStatus] = useState(false);
 
   useEffect(() => {
     const getUser = async () => {
@@ -68,8 +78,52 @@ export default function Profile(props) {
   useEffect(() => {
     if (Object.keys(userInfo).length > 0) {
       preFetchDP(userInfo.profile_url);
+      const timestamp = userInfo.joiningDate;
+      const dateObj = new Timestamp(timestamp.seconds, timestamp.nanoseconds);
+      const date = dateObj.toDate();
+      setFormattedDate(moment(date).format("DD MMM YYYY"));
     }
   }, [userInfo]);
+
+  const openCamera = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    const { status: mediaPermissionStatus } =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (status === "granted" && mediaPermissionStatus === "granted") {
+      let result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 1,
+      });
+
+      if (!result.canceled) {
+        setImageUri(result.assets[0].uri);
+        setBottomSheetStatus(false);
+      }
+    } else {
+      alert("Camera permission not granted");
+    }
+  };
+
+  const openGallery = async () => {
+    try {
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 1,
+      });
+
+      if (!result.canceled) {
+        setImageUri(result.assets[0].uri);
+        setBottomSheetStatus(false);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const handleSignOut = () => {
     setloading(true);
@@ -85,7 +139,11 @@ export default function Profile(props) {
   return (
     <View style={styles.container} onLayout={onLayoutRootView}>
       <View style={styles.profileInfo}>
-        <TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => {
+            setBottomSheetStatus(true);
+          }}
+        >
           <ImageBackground
             style={{ height: 120, width: 120 }}
             imageStyle={{
@@ -100,6 +158,42 @@ export default function Profile(props) {
             </View>
           </ImageBackground>
         </TouchableOpacity>
+        <BottomSheet
+          isVisible={bottomSheetStatus}
+          style={styles.profileBottomSheetBG}
+        >
+          <ListItem>
+            <ListItem.Content style={[styles.basicFlexStyle]}>
+              <TouchableOpacity
+                style={styles.bottomSheetBtnStyle}
+                onPress={openCamera}
+              >
+                <Entypo name="camera" size={28} color="#F9FAFB" />
+                <Text style={styles.bottomSheetBtnTextStyle}>
+                  &nbsp; Camera
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.bottomSheetBtnStyle}
+                onPress={openGallery}
+              >
+                <FontAwesome name="photo" size={28} color="#F9FAFB" />
+                <Text style={styles.bottomSheetBtnTextStyle}>
+                  &nbsp; Gallery
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.bottomSheetBtnStyle}
+                onPress={() => {
+                  setBottomSheetStatus(false);
+                }}
+              >
+                <FontAwesome name="close" size={28} color="#F9FAFB" />
+                <Text style={styles.bottomSheetBtnTextStyle}>&nbsp; Close</Text>
+              </TouchableOpacity>
+            </ListItem.Content>
+          </ListItem>
+        </BottomSheet>
 
         <Text style={styles.profileName}>
           {Object.keys(userInfo).length > 0
@@ -163,7 +257,9 @@ export default function Profile(props) {
         </View>
         <View style={{ flexDirection: "row", paddingBottom: 5, gap: 10 }}>
           <FontAwesome5 name="user-clock" size={20} color="#002D02" />
-          <Text style={styles.detailTextStyle}>Joined: </Text>
+          <Text style={styles.detailTextStyle}>
+            {formattedDate ? `Joined: ${formattedDate}` : ""}
+          </Text>
         </View>
       </View>
       <View style={styles.postContainer}>
@@ -275,5 +371,40 @@ const styles = StyleSheet.create({
     fontFamily: "DMBold",
     fontSize: 28,
     color: "#002D02",
+  },
+  profileBottomSheetBG: {
+    backgroundColor: "white",
+    height: "40%",
+    width: "100%",
+    position: "absolute",
+    bottom: "0%",
+    padding: 0,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+    borderRadius: 30,
+    overflow: "hidden",
+  },
+  basicFlexStyle: {
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  bottomSheetBtnStyle: {
+    backgroundColor: "#002D02",
+    width: "90%",
+    height: "auto",
+    padding: 10,
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 20,
+    margin: 5,
+  },
+  bottomSheetBtnTextStyle: {
+    fontFamily: "DMBold",
+    fontSize: 28,
+    color: "#F9FAFB",
   },
 });

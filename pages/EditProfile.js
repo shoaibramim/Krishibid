@@ -16,10 +16,23 @@ import {
   MaterialCommunityIcons,
   MaterialIcons,
   FontAwesome5,
-  Feather
+  Feather,
 } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { auth, db } from "../firebase";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import {
+  collection,
+  getDocs,
+  query,
+  where,
+  Timestamp,
+} from "firebase/firestore";
 import moment from "moment";
+import * as ImagePicker from "expo-image-picker";
+import { BottomSheet, ListItem } from "@rneui/base";
+import { Dropdown } from 'react-native-element-dropdown';
+import axios from 'axios';
 
 export default function EditProfile(props) {
   const { navigation, route } = props;
@@ -35,6 +48,21 @@ export default function EditProfile(props) {
   );
   const [birthDateModalStatus, setBirthDateModalStatus] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [bottomSheetStatus, setBottomSheetStatus] = useState(false);
+  const [imageUri, setImageUri] = useState(null);
+  const [newImageUri, setnewImageUri] = useState(null);
+  const [userInfo, setUserInfo] = useState({});
+
+  const [countryData, setCountryData] = useState([]);
+  const [stateData, setStateData] = useState([]);
+  const [cityData, setCityData] = useState([]);
+  const [country, setCountry] = useState(null);
+  const [state, setState] = useState(null);
+  const [city, setCity] = useState(null);
+  const [countryName, setCountryName] = useState(null);
+  const [stateName, setStateName] = useState(null);
+  const [cityName, setCityName] = useState(null);
+  const [isFocus, setIsFocus] = useState(false);
 
   const usernameMessages = [
     ["Username available", "green"],
@@ -59,10 +87,96 @@ export default function EditProfile(props) {
     checkUniqueUsername();
   }, [username]);
 
+  useEffect(() => {
+    const getUser = async () => {
+      const userData = await AsyncStorage.getItem("userData");
+      if (userData) {
+        const user = JSON.parse(userData);
+        setUserInfo(user);
+      } else {
+        const usersRef = collection(db, "users");
+        const q = query(usersRef, where("email", "==", auth.currentUser.email));
+        const querySnapshot = await getDocs(q);
+        querySnapshot.forEach((doc) => {
+          const userData = doc.data();
+          setUserInfo(userData);
+        });
+      }
+    };
+    getUser();
+  }, []);
+
+  const storageBucket = "krishibid-react-native.appspot.com";
+
+  const getImageUrlToShow = (image) => {
+    const imageUrl = `https://firebasestorage.googleapis.com/v0/b/${storageBucket}/o/${encodeURIComponent(
+      image
+    )}?alt=media`;
+
+    return imageUrl;
+  };
+
+  const preFetchDP = (userProfilePic) => {
+    const imageRef = getImageUrlToShow(userProfilePic);
+    setImageUri(imageRef);
+    setnewImageUri(imageRef);
+  };
+
+  useEffect(() => {
+    if (Object.keys(userInfo).length > 0) {
+      preFetchDP(userInfo.profile_url);
+    }
+  }, [userInfo]);
+
+  const openCamera = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    const { status: mediaPermissionStatus } =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (status === "granted" && mediaPermissionStatus === "granted") {
+      let result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 1,
+      });
+
+      if (!result.canceled) {
+        setImageUri(result.assets[0].uri);
+        setBottomSheetStatus(false);
+      }
+    } else {
+      alert("Camera permission not granted");
+    }
+  };
+
+  const openGallery = async () => {
+    try {
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 1,
+      });
+
+      if (!result.canceled) {
+        setImageUri(result.assets[0].uri);
+        setBottomSheetStatus(false);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
     <View style={styles.container} onLayout={onLayoutRootView}>
       <Text style={styles.textStyle}>Edit Profile</Text>
-      <TouchableOpacity style={{ marginBottom: 10 }}>
+      <TouchableOpacity
+        style={{ marginBottom: 10 }}
+        onPress={() => {
+          setBottomSheetStatus(true);
+        }}
+      >
         <ImageBackground
           style={{ height: 120, width: 120 }}
           imageStyle={{
@@ -70,62 +184,110 @@ export default function EditProfile(props) {
             borderWidth: 3,
             borderColor: "#002D02",
           }}
-          source={require("../assets/ThomasShelby Square.jpg")}
+          source={{ uri: imageUri }}
         >
           <View style={styles.editProfilePic}>
             <Entypo name="camera" size={24} color="white" />
           </View>
         </ImageBackground>
       </TouchableOpacity>
+      <BottomSheet
+        isVisible={bottomSheetStatus}
+        style={styles.profileBottomSheetBG}
+      >
+        <ListItem>
+          <ListItem.Content style={[styles.basicFlexStyle]}>
+            <TouchableOpacity
+              style={styles.bottomSheetBtnStyle}
+              onPress={openCamera}
+            >
+              <Entypo name="camera" size={28} color="#F9FAFB" />
+              <Text style={styles.bottomSheetBtnTextStyle}>&nbsp; Camera</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.bottomSheetBtnStyle}
+              onPress={openGallery}
+            >
+              <FontAwesome name="photo" size={28} color="#F9FAFB" />
+              <Text style={styles.bottomSheetBtnTextStyle}>&nbsp; Gallery</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.bottomSheetBtnStyle}
+              onPress={() => {
+                setBottomSheetStatus(false);
+              }}
+            >
+              <FontAwesome name="close" size={28} color="#F9FAFB" />
+              <Text style={styles.bottomSheetBtnTextStyle}>&nbsp; Close</Text>
+            </TouchableOpacity>
+          </ListItem.Content>
+        </ListItem>
+      </BottomSheet>
+
       <View style={styles.flexRow}>
         <View style={[styles.textInputStyle, styles.textInputStyleWidth50]}>
           <Text style={styles.textInputText}>First Name</Text>
-          <TextInput style={styles.textInputFlexBox} placeholder="Peter" />
+          <TextInput style={styles.textInputFlexBox} placeholder="">
+            {Object.keys(userInfo).length > 0 ? userInfo.firstName : ""}
+          </TextInput>
         </View>
         <View style={[styles.textInputStyle, styles.textInputStyleWidth50]}>
           <Text style={styles.textInputText}>Last Name</Text>
-          <TextInput style={styles.textInputFlexBox} placeholder="Parker" />
+          <TextInput style={styles.textInputFlexBox} placeholder="">
+            {Object.keys(userInfo).length > 0 ? userInfo.lastName : ""}
+          </TextInput>
         </View>
       </View>
       <View style={styles.textInputStyle}>
         <Text style={styles.textInputText}>Username</Text>
         <TextInput
           style={styles.textInputBox}
-          placeholder="spider_man"
+          placeholder=""
           autoCapitalize="none"
-        />
+        >
+          {Object.keys(userInfo).length > 0 ? userInfo.username : ""}
+        </TextInput>
       </View>
       {usernameError[0].length > 0 && username.length > 0 && (
-          <Text
-            style={{
-              color: usernameError[1],
-              paddingLeft: 20,
-              fontSize: 13,
-              fontFamily: "DMMedium",
-            }}
-          >
-            {usernameError[0]}
-          </Text>
-        )}
+        <Text
+          style={{
+            color: usernameError[1],
+            paddingLeft: 20,
+            fontSize: 13,
+            fontFamily: "DMMedium",
+          }}
+        >
+          {usernameError[0]}
+        </Text>
+      )}
       <View style={styles.textInputStyle}>
         <Text style={styles.textInputText}>Educational Institute</Text>
-        <TextInput
-          style={styles.textInputBox}
-          placeholder="Empire State University"
-        />
+        <TextInput style={styles.textInputBox} placeholder="">
+          {Object.keys(userInfo).length > 0
+            ? userInfo.educationalInstitute
+            : ""}
+        </TextInput>
       </View>
       <View style={styles.textInputStyle}>
         <Text style={styles.textInputText}>Location</Text>
-        <TextInput style={styles.textInputBox} placeholder="Country" />
-        <View style={styles.flexRow}>
+        <TextInput style={styles.textInputBox} placeholder="">
+          {Object.keys(userInfo).length > 0 ? userInfo.location.country : ""}
+        </TextInput>
+      </View>
+      <View style={styles.flexRow}>
           <View style={[styles.textInputStyle, styles.textInputStyleWidth50]}>
-            <TextInput style={styles.textInputFlexBox} placeholder="State" />
+            <TextInput style={styles.textInputFlexBox} placeholder="">
+              {Object.keys(userInfo).length > 0 ? userInfo.location.state : ""}
+            </TextInput>
           </View>
           <View style={[styles.textInputStyle, styles.textInputStyleWidth50]}>
-            <TextInput style={styles.textInputFlexBox} placeholder="District" />
+            <TextInput style={styles.textInputFlexBox} placeholder="">
+              {Object.keys(userInfo).length > 0
+                ? userInfo.location.district
+                : ""}
+            </TextInput>
           </View>
         </View>
-      </View>
       <View style={styles.textInputStyle}>
         <Text style={styles.textInputText}>Date of Birth</Text>
         <TouchableOpacity
@@ -135,7 +297,7 @@ export default function EditProfile(props) {
           <Text style={styles.birthDate}>
             <FontAwesome name="birthday-cake" size={20} color="#002D02" />
             &nbsp; &nbsp;
-            {birthDate}
+            {Object.keys(userInfo).length > 0 ? userInfo.dob : ""}
           </Text>
         </TouchableOpacity>
         {birthDateModalStatus && (
@@ -161,15 +323,11 @@ export default function EditProfile(props) {
         )}
       </View>
       <TouchableOpacity style={styles.buttonFlexBox}>
-      <Feather name="upload" size={22} color="white" />
-            <Text style={styles.buttonText}>
-              {loading ? (
-                <ActivityIndicator size={18} color={"#fff"} />
-              ) : (
-                "Update"
-              )}
-            </Text>
-          </TouchableOpacity>
+        <Feather name="upload" size={22} color="white" />
+        <Text style={styles.buttonText}>
+          {loading ? <ActivityIndicator size={18} color={"#fff"} /> : "Update"}
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -304,5 +462,40 @@ const styles = StyleSheet.create({
     marginLeft: 15,
     marginRight: 15,
     paddingLeft: 16,
+  },
+  profileBottomSheetBG: {
+    backgroundColor: "white",
+    height: "40%",
+    width: "100%",
+    position: "absolute",
+    bottom: "0%",
+    padding: 0,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+    borderRadius: 30,
+    overflow: "hidden",
+  },
+  basicFlexStyle: {
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  bottomSheetBtnStyle: {
+    backgroundColor: "#002D02",
+    width: "90%",
+    height: "auto",
+    padding: 10,
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 20,
+    margin: 5,
+  },
+  bottomSheetBtnTextStyle: {
+    fontFamily: "DMBold",
+    fontSize: 28,
+    color: "#F9FAFB",
   },
 });

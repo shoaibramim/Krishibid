@@ -365,7 +365,7 @@ export default function EditProfile(props) {
           maxHeight={200}
           labelField="label"
           valueField="value"
-          placeholder={!isFocus ? 'Select Country' : '...'}
+          placeholder={!isFocus ? `${Object.keys(userInfo).length > 0 ? userInfo.country : ""}` : '...'}
           searchPlaceholder="Search..."
           value={country}
           onFocus={() => setIsFocus(true)}
@@ -390,7 +390,7 @@ export default function EditProfile(props) {
           maxHeight={200}
           labelField="label"
           valueField="value"
-          placeholder={!isFocus ? 'Select State' : '...'}
+          placeholder={!isFocus ? `${Object.keys(userInfo).length > 0 ? userInfo.state : ""}` : '...'}
           searchPlaceholder="Search..."
           value={state}
           onFocus={() => setIsFocus(true)}
@@ -414,7 +414,7 @@ export default function EditProfile(props) {
           maxHeight={200}
           labelField="label"
           valueField="value"
-          placeholder={!isFocus ? 'Select City' : '...'}
+          placeholder={!isFocus ? `${Object.keys(userInfo).length > 0 ? userInfo.city : ""}` : '...'}
           searchPlaceholder="Search..."
           value={city}
           onFocus={() => setIsFocus(true)}

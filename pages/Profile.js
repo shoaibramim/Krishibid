@@ -6,6 +6,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   ImageBackground,
+  Alert,
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import {
@@ -24,16 +25,51 @@ import {
   query,
   where,
   Timestamp,
+  updateDoc,
+  doc,
 } from "firebase/firestore";
 import moment from "moment";
 import * as ImagePicker from "expo-image-picker";
 import { BottomSheet, ListItem } from "@rneui/base";
 
+const storageBucket = "krishibid-react-native.appspot.com";
+
+const updateOnFirebase = async (fileName, image, userId) => {
+  try {
+    const response = await fetch(
+      "https://firebasestorage.googleapis.com/v0/b/" +
+        storageBucket +
+        "/o?name=" +
+        fileName,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "image/jpeg" || "image/png" || "image/jpg",
+        },
+        body: await fetch(image).then((response) => response.blob()),
+      }
+    );
+    if (response.ok) {
+      try {
+        await updateDoc(doc(db, "users", userId), { profile_url: fileName });
+      } catch (error) {
+        console.error(error);
+        Alert.alert("Failed to upload photo.");
+      }
+      Alert.alert("Profile Picture Updated");
+    } else {
+      Alert.alert("Failed to upload photo.");
+    }
+  } catch (error) {
+    console.error(error);
+  }
+};
+
 export default function Profile(props) {
   const { navigation, route } = props;
   const onLayoutRootView = route.params.onLayoutRootView;
 
-  const [loading, setloading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [userInfo, setUserInfo] = useState({});
   const [newImageUri, setnewImageUri] = useState(null);
   const [imageUri, setImageUri] = useState(null);
@@ -59,7 +95,7 @@ export default function Profile(props) {
     getUser();
   }, []);
 
-  const storageBucket = "krishibid-react-native.appspot.com";
+  //const storageBucket = "krishibid-react-native.appspot.com";
 
   const getImageUrlToShow = (image) => {
     const imageUrl = `https://firebasestorage.googleapis.com/v0/b/${storageBucket}/o/${encodeURIComponent(
@@ -101,6 +137,17 @@ export default function Profile(props) {
       if (!result.canceled) {
         setImageUri(result.assets[0].uri);
         setBottomSheetStatus(false);
+
+        setLoading(true);
+        const timestamp = new Date();
+        const uploadDate = timestamp.toString();
+        const fileName = `images/ProfilePhotos/${userInfo.user_id}_${uploadDate}.jpg`;
+        await updateOnFirebase(
+          fileName,
+          result.assets[0].uri,
+          userInfo.user_id
+        );
+        setLoading(false);
       }
     } else {
       alert("Camera permission not granted");
@@ -119,6 +166,17 @@ export default function Profile(props) {
       if (!result.canceled) {
         setImageUri(result.assets[0].uri);
         setBottomSheetStatus(false);
+
+        setLoading(true);
+        const timestamp = new Date();
+        const uploadDate = timestamp.toString();
+        const fileName = `images/ProfilePhotos/${userInfo.user_id}_${uploadDate}.jpg`;
+        await updateOnFirebase(
+          fileName,
+          result.assets[0].uri,
+          userInfo.user_id
+        );
+        setLoading(false);
       }
     } catch (error) {
       console.log(error);
@@ -126,10 +184,10 @@ export default function Profile(props) {
   };
 
   const handleSignOut = () => {
-    setloading(true);
+    setLoading(true);
     auth.signOut();
     navigation.replace("StarterScreen");
-    setloading(false);
+    setLoading(false);
   };
 
   const goToEditProfile = () => {
@@ -154,7 +212,11 @@ export default function Profile(props) {
             source={{ uri: imageUri }}
           >
             <View style={styles.editProfilePic}>
-              <Entypo name="camera" size={24} color="white" />
+              {loading ? (
+                <ActivityIndicator size={24} color={"white"} />
+              ) : (
+                <Entypo name="camera" size={24} color="white" />
+              )}
             </View>
           </ImageBackground>
         </TouchableOpacity>
@@ -237,7 +299,7 @@ export default function Profile(props) {
           <MaterialIcons name="location-pin" size={20} color="#002D02" />
           <Text style={styles.detailTextStyle}>
             {Object.keys(userInfo).length > 0
-              ? userInfo.location.district + ", " + userInfo.location.state
+              ? userInfo.location.city + ", " + userInfo.location.state
               : ""}
           </Text>
         </View>

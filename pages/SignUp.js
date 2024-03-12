@@ -101,7 +101,7 @@ export default function SignUp(props) {
         location: {
           country: "N/A",
           state: "N/A",
-          district: "N/A"
+          city: "N/A"
         }
       });
 

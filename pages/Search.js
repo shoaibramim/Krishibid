@@ -5,8 +5,10 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
+  TextInput
 } from "react-native";
 import React, { useState } from "react";
+import { FontAwesome, Entypo, Feather } from "@expo/vector-icons";
 
 export default function Search(props) {
   const { navigation, route } = props;
@@ -15,6 +17,7 @@ export default function Search(props) {
   return (
     <View style={styles.container} onLayout={onLayoutRootView}>
       <Text style={styles.textStyle}>Search</Text>
+      <TextInput style={styles.searchBox} placeholder="search" />
     </View>
   );
 }
@@ -24,7 +27,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#BAE3BB",
     alignItems: "center",
-    justifyContent: "center",
+    //justifyContent: "center",
   },
   logoStarterScreen: {
     maxWidth: "100%",
@@ -68,9 +71,26 @@ const styles = StyleSheet.create({
   },
   textStyle: {
     fontFamily: "DMBold",
-    fontSize: 50,
+    fontSize: 30,
     color: "#002D02",
     padding: 10,
     textAlign: "center",
+    marginTop: 15
+  },
+  textInputText: {
+    fontFamily: "DMMedium",
+    color: "#002D02",
+    fontSize: 16,
+    marginHorizontal: 20,
+  },
+  searchBox: {
+    fontFamily: "DMRegular",
+    height: 45,
+    width: "95%",
+    borderRadius: 12,
+    overflow: "hidden",
+    backgroundColor: "#D8EBD9",
+    color: "#002D02",
+    paddingLeft: 20,
   },
 });

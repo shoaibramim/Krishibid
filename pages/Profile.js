@@ -95,8 +95,6 @@ export default function Profile(props) {
     getUser();
   }, []);
 
-  //const storageBucket = "krishibid-react-native.appspot.com";
-
   const getImageUrlToShow = (image) => {
     const imageUrl = `https://firebasestorage.googleapis.com/v0/b/${storageBucket}/o/${encodeURIComponent(
       image
@@ -140,7 +138,8 @@ export default function Profile(props) {
 
         setLoading(true);
         const timestamp = new Date();
-        const uploadDate = timestamp.toString();
+        const timestampString = timestamp.toString();
+        const uploadDate= timestampString.split(' ').join('_');
         const fileName = `images/ProfilePhotos/${userInfo.user_id}_${uploadDate}.jpg`;
         await updateOnFirebase(
           fileName,
@@ -169,7 +168,8 @@ export default function Profile(props) {
 
         setLoading(true);
         const timestamp = new Date();
-        const uploadDate = timestamp.toString();
+        const timestampString = timestamp.toString();
+        const uploadDate= timestampString.split(' ').join('_');
         const fileName = `images/ProfilePhotos/${userInfo.user_id}_${uploadDate}.jpg`;
         await updateOnFirebase(
           fileName,

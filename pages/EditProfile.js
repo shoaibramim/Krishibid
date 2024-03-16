@@ -7,15 +7,12 @@ import {
   ActivityIndicator,
   ImageBackground,
   TextInput,
+  Alert,
 } from "react-native";
 import React, { useState, useEffect } from "react";
 import {
   FontAwesome,
   Entypo,
-  AntDesign,
-  MaterialCommunityIcons,
-  MaterialIcons,
-  FontAwesome5,
   Feather,
 } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -27,6 +24,8 @@ import {
   query,
   where,
   Timestamp,
+  updateDoc,
+  doc,
 } from "firebase/firestore";
 import moment from "moment";
 import * as ImagePicker from "expo-image-picker";
@@ -43,9 +42,6 @@ export default function EditProfile(props) {
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [username, setUsername] = useState("");
-  const [error, setError] = useState("");
-  const [usernameError, setUsernameError] = useState(["", ""]);
   const [birthDate, setBirthDate] = useState(
     moment(new Date()).format("DD/MM/YYYY")
   );
@@ -55,6 +51,8 @@ export default function EditProfile(props) {
   const [imageUri, setImageUri] = useState(null);
   const [newImageUri, setnewImageUri] = useState(null);
   const [userInfo, setUserInfo] = useState({});
+  const [fileName, setFileName] = useState(null);
+  const [eduInstitute, setEduInstitute] = useState("");
 
   const [countryData, setCountryData] = useState([]);
   const [stateData, setStateData] = useState([]);
@@ -67,28 +65,6 @@ export default function EditProfile(props) {
   const [cityName, setCityName] = useState(null);
   const [isFocus, setIsFocus] = useState(false);
 
-  const usernameMessages = [
-    ["Username available", "green"],
-    ["Username is not available", "red"],
-    ["", ""],
-  ];
-
-  useEffect(() => {
-    const checkUniqueUsername = async () => {
-      if (username != "") {
-        try {
-          const userRef = collection(db, "users");
-          const q = query(userRef, where("username", "==", username));
-          const querySnapshot = await getDocs(q);
-          if (querySnapshot.size == 0) setUsernameError(usernameMessages[0]);
-          else setUsernameError(usernameMessages[1]);
-        } catch (e) {
-          console.log(e);
-        }
-      } else setUsernameError(usernameMessages[2]);
-    };
-    checkUniqueUsername();
-  }, [username]);
 
   useEffect(() => {
     const getUser = async () => {
@@ -103,6 +79,7 @@ export default function EditProfile(props) {
         querySnapshot.forEach((doc) => {
           const userData = doc.data();
           setUserInfo(userData);
+          setBirthDate(userData.dob);
         });
       }
     };
@@ -252,6 +229,14 @@ export default function EditProfile(props) {
       });
   };
 
+  const handleSubmit=async()=>{
+    try {
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Failed to upload photo.");
+    }
+  }
+
   return (
     <View style={styles.container} onLayout={onLayoutRootView}>
       <Text style={styles.textStyle}>Edit Profile</Text>
@@ -325,25 +310,14 @@ export default function EditProfile(props) {
       <View style={styles.textInputStyle}>
         <Text style={styles.textInputText}>Username</Text>
         <TextInput
-          style={styles.textInputBox}
+          style={[styles.textInputBoxWithOpacity, styles.flexRow]}
           placeholder=""
           autoCapitalize="none"
+          editable={false}
         >
           {Object.keys(userInfo).length > 0 ? userInfo.username : ""}
         </TextInput>
       </View>
-      {usernameError[0].length > 0 && username.length > 0 && (
-        <Text
-          style={{
-            color: usernameError[1],
-            paddingLeft: 20,
-            fontSize: 13,
-            fontFamily: "DMMedium",
-          }}
-        >
-          {usernameError[0]}
-        </Text>
-      )}
       <View style={styles.textInputStyle}>
         <Text style={styles.textInputText}>Educational Institute</Text>
         <TextInput style={styles.textInputBox} placeholder="">
@@ -460,7 +434,7 @@ export default function EditProfile(props) {
           />
         )}
       </View>
-      <TouchableOpacity style={styles.buttonFlexBox}>
+      <TouchableOpacity style={styles.buttonFlexBox} onPress={handleSubmit}>
         <Feather name="upload" size={22} color="white" />
         <Text style={styles.buttonText}>
           {loading ? <ActivityIndicator size={18} color={"#fff"} /> : "Update"}
@@ -575,6 +549,19 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     backgroundColor: "white",
     color: "#002D02",
+    marginTop: 5,
+    marginBottom: 5,
+    marginHorizontal: 10,
+    paddingLeft: 10,
+  },
+  textInputBoxWithOpacity: {
+    fontFamily: "DMRegular",
+    height: 40,
+    width: 315,
+    borderRadius: 12,
+    overflow: "hidden",
+    backgroundColor: "white",
+    color: 'rgba(0,0,0,0.4)',
     marginTop: 5,
     marginBottom: 5,
     marginHorizontal: 10,

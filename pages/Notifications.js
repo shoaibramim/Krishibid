@@ -24,7 +24,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#BAE3BB",
     alignItems: "center",
-    justifyContent: "center",
+    //justifyContent: "center",
   },
   logoStarterScreen: {
     maxWidth: "100%",
@@ -68,9 +68,10 @@ const styles = StyleSheet.create({
   },
   textStyle: {
     fontFamily: "DMBold",
-    fontSize: 50,
+    fontSize: 30,
     color: "#002D02",
     padding: 10,
     textAlign: "center",
+    margin: 15,
   },
 });

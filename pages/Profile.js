@@ -100,6 +100,8 @@ export default function Profile(props) {
       image
     )}?alt=media`;
 
+    console.log(imageUrl);
+
     return imageUrl;
   };
 
@@ -137,10 +139,8 @@ export default function Profile(props) {
         setBottomSheetStatus(false);
 
         setLoading(true);
-        const timestamp = new Date();
-        const timestampString = timestamp.toString();
-        const uploadDate= timestampString.split(' ').join('_');
-        const fileName = `images/ProfilePhotos/${userInfo.user_id}_${uploadDate}.jpg`;
+        const timestamp = new Date().getTime();
+        const fileName = `images/ProfilePhotos/${userInfo.user_id}_${timestamp}.jpg`;
         await updateOnFirebase(
           fileName,
           result.assets[0].uri,
@@ -167,10 +167,8 @@ export default function Profile(props) {
         setBottomSheetStatus(false);
 
         setLoading(true);
-        const timestamp = new Date();
-        const timestampString = timestamp.toString();
-        const uploadDate= timestampString.split(' ').join('_');
-        const fileName = `images/ProfilePhotos/${userInfo.user_id}_${uploadDate}.jpg`;
+        const timestamp = new Date().getTime();
+        const fileName = `images/ProfilePhotos/${userInfo.user_id}_${timestamp}.jpg`;
         await updateOnFirebase(
           fileName,
           result.assets[0].uri,

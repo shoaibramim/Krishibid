@@ -34,36 +34,7 @@ import { BottomSheet, ListItem } from "@rneui/base";
 
 const storageBucket = "krishibid-react-native.appspot.com";
 
-const updateOnFirebase = async (fileName, image, userId) => {
-  try {
-    const response = await fetch(
-      "https://firebasestorage.googleapis.com/v0/b/" +
-        storageBucket +
-        "/o?name=" +
-        fileName,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "image/jpeg" || "image/png" || "image/jpg",
-        },
-        body: await fetch(image).then((response) => response.blob()),
-      }
-    );
-    if (response.ok) {
-      try {
-        await updateDoc(doc(db, "users", userId), { profile_url: fileName });
-      } catch (error) {
-        console.error(error);
-        Alert.alert("Failed to upload photo.");
-      }
-      Alert.alert("Profile Picture Updated");
-    } else {
-      Alert.alert("Failed to upload photo.");
-    }
-  } catch (error) {
-    console.error(error);
-  }
-};
+
 
 export default function Profile(props) {
   const { navigation, route } = props;
@@ -95,12 +66,55 @@ export default function Profile(props) {
     getUser();
   }, []);
 
+  const updateOnFirebase = async (fileName, image, userId) => {
+    try {
+      const response = await fetch(
+        "https://firebasestorage.googleapis.com/v0/b/" +
+          storageBucket +
+          "/o?name=" +
+          fileName,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "image/jpeg" || "image/png" || "image/jpg",
+          },
+          body: await fetch(image).then((response) => response.blob()),
+        }
+      );
+      if (response.ok) {
+        try {
+          await updateDoc(doc(db, "users", userId), { profile_url: fileName });
+          updateAsyncData(fileName);
+        } catch (error) {
+          console.error(error);
+          Alert.alert("Failed to upload photo.");
+        }
+        Alert.alert("Profile Picture Updated");
+      } else {
+        Alert.alert("Failed to upload photo.");
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  
+  const updateAsyncData= async(profile_url)=>{
+    let temp= userInfo;
+    temp.profile_url= profile_url;
+    AsyncStorage.setItem('userData', JSON.stringify(temp))
+                    .then(() => {
+                         console.log('Data stored successfully!')
+                    })
+                    .catch((error) => {
+                         console.log('Failed to store data locally: ', error);
+                    });
+  }
+
+
   const getImageUrlToShow = (image) => {
     const imageUrl = `https://firebasestorage.googleapis.com/v0/b/${storageBucket}/o/${encodeURIComponent(
       image
     )}?alt=media`;
-
-    console.log(imageUrl);
 
     return imageUrl;
   };
@@ -181,9 +195,10 @@ export default function Profile(props) {
     }
   };
 
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
     setLoading(true);
-    auth.signOut();
+    await AsyncStorage.removeItem('userData');
+    await auth.signOut();
     navigation.replace("StarterScreen");
     setLoading(false);
   };

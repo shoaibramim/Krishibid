@@ -1,11 +1,21 @@
-import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
-import React from "react";
+import {
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  ActivityIndicator,
+  StyleSheet,
+} from "react-native";
+import React, { useState, useEffect } from "react";
 import { FontAwesome, Entypo } from "@expo/vector-icons";
 import Animated, { FadeInUp, FadeInDown } from "react-native-reanimated";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const StarterScreen = (props) => {
   const { navigation, route } = props;
   const onLayoutRootView = route.params.onLayoutRootView;
+
+  const [loading, setLoading] = useState(false);
 
   const goToClickOrSelectImage = () => {
     navigation.push("ClickOrSelectImage");
@@ -15,27 +25,53 @@ const StarterScreen = (props) => {
     navigation.push("Login");
   };
 
+  useEffect(() => {
+    const getUser = async () => {
+      setLoading(true);
+      const userData = await AsyncStorage.getItem("userData");
+      if (userData) {
+        if (navigation.canGoBack() == true) {
+          navigation.popToTop();
+        }
+        navigation.replace("BottomTabs");
+      }
+    };
+    getUser();
+    setLoading(false);
+  }, []);
+
   return (
     <View style={styles.starterScreen} onLayout={onLayoutRootView}>
-      <Animated.Image
-        entering={FadeInDown.delay(200).duration(1000).springify()}
-        style={styles.logoStarterScreen}
-        contentFit="cover"
-        source={require("../assets/Brand-logo.png")}
-      />
-      <Animated.View entering={FadeInUp.delay(100).duration(1000).springify()}>
-        <TouchableOpacity
-          style={styles.buttonFlexBox}
-          onPress={goToClickOrSelectImage}
-        >
-          <Entypo name="camera" size={30} color="#ffffff" />
-          <Text style={[styles.buttonText]}>Detect</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.buttonFlexBox]} onPress={goToLogIn}>
-          <FontAwesome name="user" size={30} color="#ffffff" />
-          <Text style={[styles.buttonText]}>Sign In</Text>
-        </TouchableOpacity>
-      </Animated.View>
+      {loading ? (
+        <ActivityIndicator size={50} color={"#002D02"} />
+      ) : (
+        <View>
+          <Animated.Image
+            entering={FadeInDown.delay(200).duration(1000).springify()}
+            style={styles.logoStarterScreen}
+            contentFit="cover"
+            source={require("../assets/Brand-logo.png")}
+          />
+          <Animated.View
+            entering={FadeInUp.delay(100).duration(1000).springify()}
+          >
+            <TouchableOpacity
+              style={styles.buttonFlexBox}
+              onPress={goToClickOrSelectImage}
+            >
+              <Entypo name="camera" size={30} color="#ffffff" />
+              <Text style={[styles.buttonText]}>Detect</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.buttonFlexBox]}
+              onPress={goToLogIn}
+            >
+              <FontAwesome name="user" size={30} color="#ffffff" />
+              <Text style={[styles.buttonText]}>Sign In</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
+      )}
     </View>
   );
 };

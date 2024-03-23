@@ -72,6 +72,7 @@ export default function EditProfile(props) {
       if (userData) {
         const user = JSON.parse(userData);
         setUserInfo(user);
+        setBirthDate(user.dob);
       } else {
         const usersRef = collection(db, "users");
         const q = query(usersRef, where("email", "==", auth.currentUser.email));

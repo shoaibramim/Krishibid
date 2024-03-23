@@ -14,6 +14,9 @@ import { FontAwesome, Entypo } from "@expo/vector-icons";
 import Animated, { FadeInUp, FadeInDown } from "react-native-reanimated";
 import { auth, db } from "../firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Checkbox } from 'react-native-paper';
 
 export default function Login(props) {
   const { navigation, route } = props;
@@ -23,6 +26,7 @@ export default function Login(props) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setloading] = useState(false);
+  const [isRememberMeChecked, setIsRememberMeChecked] = useState(false);
 
   const loginUser = async () => {
     try {
@@ -30,6 +34,40 @@ export default function Login(props) {
       setEmail(email.trim());
       const { user } = await signInWithEmailAndPassword(auth, email, password);
       if (user.emailVerified) {
+        const usersRef = collection(db, "users");
+        const q = query(usersRef, where("email", "==", email));
+        const querySnapshot = await getDocs(q);
+        querySnapshot.forEach((doc) => {
+            const userData = doc.data();
+            const loggedUserInfo = {
+                user_id: userData.user_id,
+                email: userData.email,
+                username: userData.username,
+                firstName: userData.firstName,
+                lastName: userData.lastName,
+                profile_url: userData.profile_url,
+                dob: userData.dob,
+                joiningDate: userData.joiningDate,
+                educationalInstitute: userData.educationalInstitute,
+                location: {
+                  country: userData.location.country,
+                  state: userData.location.state,
+                  city: userData.location.city
+                }
+            };
+            if (isRememberMeChecked) {
+                const loggedUserInfoString = JSON.stringify(loggedUserInfo);
+                AsyncStorage.setItem('userData', loggedUserInfoString)
+                    .then(() => {
+                         console.log('Data stored successfully!')
+                    })
+                    .catch((error) => {
+                         console.log('Failed to store data locally: ', error);
+                    });
+            }
+            setEmail('');
+            setPassword('');
+          });
         navigation.popToTop();
         navigation.replace("BottomTabs");
       } else {
@@ -117,6 +155,18 @@ export default function Login(props) {
             />
           </Animated.View>
         </View>
+        <Animated.View
+          entering={FadeInDown.delay(400).duration(1000).springify()}
+          style={styles.checkboxContainer}
+        >
+         <Checkbox
+                    style={styles.checkbox}
+                    status={isRememberMeChecked ? 'checked' : 'unchecked'}
+                    onPress={() => {setIsRememberMeChecked(!isRememberMeChecked);}}
+                    color={isRememberMeChecked ? "#002D02" : undefined}
+                />
+                <Text onPress={() => {setIsRememberMeChecked(!isRememberMeChecked);}} style={styles.checkboxLabel}>Keep Me Logged In</Text> 
+        </Animated.View>
         {error.length > 0 && (
           <Text
             style={{
@@ -129,7 +179,7 @@ export default function Login(props) {
           </Text>
         )}
         <Animated.View
-          entering={FadeInDown.delay(400).duration(1000).springify()}
+          entering={FadeInDown.delay(300).duration(1000).springify()}
         >
           <TouchableOpacity style={styles.buttonFlexBox} onPress={handleLogin}>
             <FontAwesome name="user" size={24} color="#ffffff" />
@@ -268,5 +318,22 @@ const styles = StyleSheet.create({
     flexDirection: "column",
     justifyContent: "center",
     alignItems: "center",
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    marginHorizontal: 10,
+    paddingLeft: 20,
+    width:'auto',
+    alignContent: "center",
+    alignItems: "center",
+  },
+  checkbox: {
+    alignSelf: 'center',
+    color: "#002D02",
+  },
+  checkboxLabel: {
+    fontFamily: "DMMedium",
+    color: "#002D02",
+    fontSize: 16,
   },
 });

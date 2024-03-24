@@ -5,7 +5,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  TextInput
+  TextInput,
 } from "react-native";
 import React, { useState, useEffect } from "react";
 import * as ImagePicker from "expo-image-picker";
@@ -42,15 +42,33 @@ export default function CreatePost(props) {
       />
       <View style={styles.backgorund}>
         <Text style={styles.textStyle}>Create Post</Text>
-        <TextInput style={styles.inputBox} multiline={true} placeholder="What's in your mind?" />
+        <TextInput
+          style={styles.inputBox}
+          multiline={true}
+          placeholder="What's in your mind?"
+        />
         <Image style={styles.imageStyle} source={{ uri: imageUri }} />
-        <TouchableOpacity style={styles.btnStyle} onPress={openGallery}>
-              <MaterialIcons name="change-circle" size={24} color= "white" />
-              <Text style={styles.btnTextStyle}>&nbsp; {imageUri? "Change Photo": "Select Photo"}</Text>
-        </TouchableOpacity>
+        {imageUri ? (
+          <View>
+            <TouchableOpacity
+              style={styles.btnStyleSelected}
+              onPress={openGallery}
+            >
+              <MaterialIcons name="change-circle" size={24} color="white" />
+              <Text style={styles.btnTextStyle}>&nbsp; Change Photo</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View>
+            <TouchableOpacity style={styles.btnStyle} onPress={openGallery}>
+              <FontAwesome name="image" size={22} color="white" />
+              <Text style={styles.btnTextStyle}>&nbsp; Select Photo</Text>
+            </TouchableOpacity>
+          </View>
+        )}
         <TouchableOpacity style={styles.btnStyle}>
-              <Text style={styles.btnTextStyle}>&nbsp; Post</Text>
-              <MaterialIcons name="file-upload" size={22} color="white" />
+          <Text style={styles.btnTextStyle}>&nbsp; Post</Text>
+          <MaterialIcons name="file-upload" size={22} color="white" />
         </TouchableOpacity>
       </View>
     </View>
@@ -69,7 +87,7 @@ const styles = StyleSheet.create({
     height: 80,
     overflow: "hidden",
     width: "50%",
-    marginTop: 40
+    marginTop: 40,
   },
   starterScreen: {
     borderRadius: null,
@@ -122,7 +140,7 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 0,
     borderRadius: 30,
     overflow: "hidden",
-    alignItems: "center"
+    alignItems: "center",
   },
   inputBox: {
     fontFamily: "DMRegular",
@@ -133,7 +151,7 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     color: "#002D02",
     paddingLeft: 20,
-    alignItems: "center"
+    alignItems: "center",
   },
   imageStyle: {
     minHeight: 300,
@@ -147,6 +165,18 @@ const styles = StyleSheet.create({
   },
   btnStyle: {
     backgroundColor: "#002D02",
+    width: "auto",
+    height: "auto",
+    padding: 10,
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 10,
+    margin: 5,
+  },
+  btnStyleSelected: {
+    backgroundColor: "#510600",
     width: "auto",
     height: "auto",
     padding: 10,

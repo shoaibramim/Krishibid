@@ -42,7 +42,7 @@ export default function CreatePost(props) {
       />
       <View style={styles.backgorund}>
         <Text style={styles.textStyle}>Create Post</Text>
-        <TextInput style={styles.inputBox} placeholder="What's in your mind?" />
+        <TextInput style={styles.inputBox} multiline={true} placeholder="What's in your mind?" />
         <Image style={styles.imageStyle} source={{ uri: imageUri }} />
         <TouchableOpacity style={styles.btnStyle} onPress={openGallery}>
               <MaterialIcons name="change-circle" size={24} color= "white" />

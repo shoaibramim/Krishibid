@@ -367,7 +367,7 @@ export default function About(props) {
                 <Text style={styles.textHeadline}>
                   Average Rating: {averageRating.toFixed(2)}
                 </Text>
-                <Text style={styles.textDescription}>Your Review</Text>
+                {hasGivenReview? (<Text style={styles.textDescription}>Your Review</Text>): (<Text style={styles.textDescription}>Provide a Review</Text>)}
                 <AirbnbRating
                   count={10}
                   reviewColor="#002D02"

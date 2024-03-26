@@ -35,6 +35,7 @@ import axios from 'axios';
 
 const BASE_URL= process.env.EXPO_PUBLIC_BASE_URL;
 const API_KEY= process.env.EXPO_PUBLIC_API_KEY;
+const storageBucket= process.env.EXPO_PUBLIC_storageBucket;
 
 export default function EditProfile(props) {
   const { navigation, route } = props;
@@ -86,8 +87,6 @@ export default function EditProfile(props) {
     };
     getUser();
   }, []);
-
-  const storageBucket = "krishibid-react-native.appspot.com";
 
   const getImageUrlToShow = (image) => {
     const imageUrl = `https://firebasestorage.googleapis.com/v0/b/${storageBucket}/o/${encodeURIComponent(

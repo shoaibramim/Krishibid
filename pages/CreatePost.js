@@ -6,23 +6,65 @@ import {
   StyleSheet,
   ActivityIndicator,
   TextInput,
+  Alert,
 } from "react-native";
 import React, { useState, useEffect } from "react";
 import * as ImagePicker from "expo-image-picker";
 import { FontAwesome, Entypo, MaterialIcons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import firebase from "firebase/app";
+import { auth, db } from "../firebase";
+import {
+  Timestamp,
+  addDoc,
+  collection,
+  doc,
+  updateDoc,
+  query,
+  where,
+  getDocs,
+} from "firebase/firestore";
+import "firebase/auth";
+import { getAuth } from "firebase/auth";
+
+const storageBucket = process.env.EXPO_PUBLIC_storageBucket;
 
 export default function CreatePost(props) {
   const { navigation, route } = props;
   const onLayoutRootView = route.params.onLayoutRootView;
 
   const [imageUri, setImageUri] = useState(null);
+  const [postDesc, setPostDesc] = useState("");
+  const [userInfo, setUserInfo] = useState({});
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const getUser = async () => {
+      const userData = await AsyncStorage.getItem("userData");
+      if (userData) {
+        const user = JSON.parse(userData);
+        setUserInfo(user);
+      } else {
+        const usersRef = collection(db, "users");
+        const q = query(usersRef, where("email", "==", auth.currentUser.email));
+        const querySnapshot = await getDocs(q);
+        querySnapshot.forEach((doc) => {
+          const userData = doc.data();
+          setUserInfo(userData);
+        });
+      }
+    };
+    getUser();
+  }, []);
+
+  const { user_id } = userInfo;
 
   const openGallery = async () => {
     try {
       let result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
-        aspect: [4, 4],
+        aspect: [4, 3],
         quality: 1,
       });
 
@@ -31,6 +73,81 @@ export default function CreatePost(props) {
       }
     } catch (error) {
       console.log(error);
+    }
+  };
+
+  const uploadOnFirebaseStorage = async (fileName, image) => {
+    try {
+      const response = await fetch(
+        "https://firebasestorage.googleapis.com/v0/b/" +
+          storageBucket +
+          "/o?name=" +
+          fileName,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "image/jpeg" || "image/png" || "image/jpg",
+          },
+          body: await fetch(image).then((response) => response.blob()),
+        }
+      );
+      if (response.ok) {
+        try {
+          console.log("Photo uploaded in PostPhotos folder.");
+        } catch (error) {
+          console.error(error);
+        }
+      } else {
+        Alert.alert("Failed to upload photo.");
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handlePostSubmit = async () => {
+    if (postDesc.trim().length > 0 || imageUri != null) {
+      setLoading(true);
+
+      let fileName = null;
+      if (imageUri) {
+        const timestamp = new Date().getTime();
+        fileName = `images/PostPhotos/${user_id}_${timestamp}_post_photo.jpg`;
+        await uploadOnFirebaseStorage(fileName, imageUri);
+      }
+      const postsRef = collection(db, "posts");
+      try {
+        const docRef = await addDoc(postsRef, {
+          post_id: "",
+          user_id: user_id,
+          postDescription: postDesc,
+          postImg: fileName,
+          postedTime: new Date(),
+          likes: [],
+          comments: [
+            {
+              comment_id: "",
+              user_id: "",
+              commentDescription: "",
+              timestamp: new Date(),
+            },
+          ],
+        });
+        updateDoc(doc(db, "posts", docRef.id), { post_id: docRef.id });
+
+        Alert.alert("Your post has been published..");
+        setPostDesc("");
+        setImageUri(null);
+        setLoading(false);
+        navigation.navigate("Feed");
+      } catch (e) {
+        console.log(e);
+        setLoading(false);
+      }
+    } else {
+      Alert.alert(
+        "Please provide a description or select a photo to be posted."
+      );
     }
   };
 
@@ -46,10 +163,14 @@ export default function CreatePost(props) {
           style={styles.inputBox}
           multiline={true}
           placeholder="What's in your mind?"
+          onChangeText={(text) => {
+            setPostDesc(text);
+          }}
+          value={postDesc}
         />
         <Image style={styles.imageStyle} source={{ uri: imageUri }} />
         {imageUri ? (
-          <View style={{flexDirection: "row"}}>
+          <View style={{ flexDirection: "row" }}>
             <TouchableOpacity
               style={styles.btnStyleSelected}
               onPress={openGallery}
@@ -59,7 +180,9 @@ export default function CreatePost(props) {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.btnStyleSelected}
-              onPress={()=>{setImageUri(null)}}
+              onPress={() => {
+                setImageUri(null);
+              }}
             >
               <FontAwesome name="remove" size={24} color="white" />
               <Text style={styles.btnTextStyle}>&nbsp; Remove Photo</Text>
@@ -73,10 +196,14 @@ export default function CreatePost(props) {
             </TouchableOpacity>
           </View>
         )}
-        <TouchableOpacity style={styles.btnStyle}>
-          <Text style={styles.btnTextStyle}>&nbsp; Post</Text>
-          <MaterialIcons name="file-upload" size={22} color="white" />
-        </TouchableOpacity>
+        {loading ? (
+          <ActivityIndicator size={30} color={"#002D02"} />
+        ) : (
+          <TouchableOpacity style={styles.btnStyle} onPress={handlePostSubmit}>
+            <Text style={styles.btnTextStyle}>&nbsp; Post</Text>
+            <MaterialIcons name="file-upload" size={22} color="white" />
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );

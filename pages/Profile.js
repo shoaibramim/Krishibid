@@ -32,7 +32,7 @@ import moment from "moment";
 import * as ImagePicker from "expo-image-picker";
 import { BottomSheet, ListItem } from "@rneui/base";
 
-const storageBucket = "krishibid-react-native.appspot.com";
+const storageBucket= process.env.EXPO_PUBLIC_storageBucket;
 
 
 

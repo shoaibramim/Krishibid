@@ -124,14 +124,7 @@ export default function CreatePost(props) {
           postImg: fileName,
           postedTime: new Date(),
           likes: [],
-          comments: [
-            {
-              comment_id: "",
-              user_id: "",
-              commentDescription: "",
-              timestamp: new Date(),
-            },
-          ],
+          comments: [],
         });
         updateDoc(doc(db, "posts", docRef.id), { post_id: docRef.id });
 

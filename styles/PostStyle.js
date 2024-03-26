@@ -54,11 +54,10 @@ export const PostText = styled.Text`
 `;
 
 export const PostImg = styled.Image`
-    width: auto;
-    height: auto;
+    width: 100%;
+    height: 300px;
     padding-left: 15px;
     padding-right: 15px;
-    /* margin-top: 15px; */
 `;
 
 export const Divider = styled.View`
@@ -66,7 +65,7 @@ export const Divider = styled.View`
     border-bottom-width: 1px;
     width: 92%;
     align-self: center;
-    margin-top: 15px;
+    margin-top: 5px;
 `;
 
 export const InteractionWrapper = styled.View`

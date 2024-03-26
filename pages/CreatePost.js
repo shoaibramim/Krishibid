@@ -49,13 +49,20 @@ export default function CreatePost(props) {
         />
         <Image style={styles.imageStyle} source={{ uri: imageUri }} />
         {imageUri ? (
-          <View>
+          <View style={{flexDirection: "row"}}>
             <TouchableOpacity
               style={styles.btnStyleSelected}
               onPress={openGallery}
             >
               <MaterialIcons name="change-circle" size={24} color="white" />
               <Text style={styles.btnTextStyle}>&nbsp; Change Photo</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.btnStyleSelected}
+              onPress={()=>{setImageUri(null)}}
+            >
+              <FontAwesome name="remove" size={24} color="white" />
+              <Text style={styles.btnTextStyle}>&nbsp; Remove Photo</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -179,13 +186,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#510600",
     width: "auto",
     height: "auto",
-    padding: 10,
+    padding: 5,
     display: "flex",
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 10,
-    margin: 5,
+    margin: 3,
   },
   btnTextStyle: {
     fontFamily: "DMMedium",

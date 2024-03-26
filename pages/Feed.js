@@ -141,6 +141,7 @@ export default function Feed(props) {
             keyExtractor={(item) => item.id}
           />
           </View>
+          <View style={{marginTop: 60}}></View>
         </ScrollView>
       </SafeAreaView>
     </View>

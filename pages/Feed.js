@@ -7,7 +7,7 @@ import {
   ActivityIndicator,
   ScrollView,
   SafeAreaView,
-  FlatList
+  FlatList,
 } from "react-native";
 import React, { useState, useEffect } from "react";
 import { FontAwesome, Entypo, Feather } from "@expo/vector-icons";
@@ -21,66 +21,10 @@ import {
   Timestamp,
   updateDoc,
   doc,
+  orderBy,
 } from "firebase/firestore";
+import { useIsFocused } from '@react-navigation/native';
 import PostCard from "../components/PostCard";
-
-const Posts = [
-  {
-    id: "1",
-    userName: "Jenny Doe",
-    userImg: require("../assets/users/user-3.jpg"),
-    postTime: "4 mins ago",
-    post: "Hey there, this is my test for a post of my social app in React Native.",
-    postImg: require("../assets/posts/post-img-3.jpg"),
-    liked: true,
-    likes: "14",
-    comments: "5",
-  },
-  {
-    id: "2",
-    userName: "John Doe",
-    userImg: require("../assets/users/user-1.jpg"),
-    postTime: "2 hours ago",
-    post: "Hey there, this is my test for a post of my social app in React Native.",
-    postImg: null,
-    liked: false,
-    likes: "8",
-    comments: "0",
-  },
-  {
-    id: "3",
-    userName: "Ken William",
-    userImg: require("../assets/users/user-4.jpg"),
-    postTime: "1 hours ago",
-    post: "Hey there, this is my test for a post of my social app in React Native.",
-    postImg: require("../assets/posts/post-img-2.jpg"),
-    liked: true,
-    likes: "1",
-    comments: "0",
-  },
-  {
-    id: "4",
-    userName: "Selina Paul",
-    userImg: require("../assets/users/user-6.jpg"),
-    postTime: "1 day ago",
-    post: "Hey there, this is my test for a post of my social app in React Native.",
-    postImg: require("../assets/posts/post-img-4.jpg"),
-    liked: true,
-    likes: "22",
-    comments: "4",
-  },
-  {
-    id: "5",
-    userName: "Christy Alex",
-    userImg: require("../assets/users/user-7.jpg"),
-    postTime: "2 days ago",
-    post: "Hey there, this is my test for a post of my social app in React Native.",
-    postImg: null,
-    liked: false,
-    likes: "0",
-    comments: "0",
-  },
-];
 
 export default function Feed(props) {
   const { navigation, route } = props;
@@ -88,6 +32,9 @@ export default function Feed(props) {
 
   const [loading, setLoading] = useState(false);
   const [userInfo, setUserInfo] = useState({});
+  const [posts, setPosts] = useState([]);
+
+  const isFocused = useIsFocused();
 
   useEffect(() => {
     const getUser = async () => {
@@ -108,6 +55,44 @@ export default function Feed(props) {
     getUser();
   }, []);
 
+  const fetchPosts = async () => {
+    try {
+      setLoading(true);
+      const list = [];
+      const postsRef = collection(db, "posts");
+      const q = query(postsRef, orderBy("postedTime", "desc"));
+      const querySnapshot = await getDocs(q);
+      querySnapshot.forEach((doc) => {
+        const {
+          post_id,
+          user_id,
+          postDescription,
+          postImg,
+          postedTime,
+          likes,
+          comments,
+        } = doc.data();
+        list.push({
+          id: post_id,
+          user_id,
+          postDescription,
+          postImg,
+          postedTime,
+          likes,
+          comments,
+        });
+      });
+      setPosts(list);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching blogs:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchPosts();
+  }, [isFocused]);
+
   const goToClickOrSelectImage = () => {
     navigation.push("ClickOrSelectImage");
   };
@@ -115,7 +100,13 @@ export default function Feed(props) {
   return (
     <View style={styles.container} onLayout={onLayoutRootView}>
       <SafeAreaView>
-        <ScrollView showsVerticalScrollIndicator={false}>
+        {loading? (
+          <View style={{justifyContent: "center", alignItems: "center"}}>
+            <ActivityIndicator size={50} color={"#002D02"} />
+            <Text style={styles.loadingTextStyle}>Loading posts...</Text>
+          </View>
+        ): (
+          <ScrollView showsVerticalScrollIndicator={false}>
           <View style={[styles.greetingCard, styles.flexRow]}>
             <Text style={styles.textStyle}>
               Greetings,{" "}
@@ -130,19 +121,15 @@ export default function Feed(props) {
               <Entypo name="camera" size={32} color="white" />
             </TouchableOpacity>
           </View>
-          <View>
-          <FlatList
-            data={Posts}
-            renderItem={({item}) => (
-              <PostCard
-                item={item}
-              />
-            )}
-            keyExtractor={(item) => item.id}
-          />
-          </View>
-          <View style={{marginTop: 60}}></View>
+            <FlatList
+              data={posts}
+              renderItem={({ item }) => <PostCard item={item} />}
+              keyExtractor={(item) => item.id}
+              scrollEnabled={false}
+            />
+          <View style={{ marginTop: 60 }}></View>
         </ScrollView>
+        )}
       </SafeAreaView>
     </View>
   );
@@ -217,5 +204,12 @@ const styles = StyleSheet.create({
     color: "#002D02",
     padding: 10,
     textAlign: "left",
+  },
+  loadingTextStyle: {
+    fontFamily: "DMMedium",
+    fontSize: 16,
+    color: "#002D02",
+    padding: 10,
+    textAlign: "center",
   },
 });

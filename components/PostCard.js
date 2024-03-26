@@ -37,25 +37,30 @@ import {
 } from "react-native";
 import { BottomSheet, ListItem } from "@rneui/base";
 
+const storageBucket= process.env.EXPO_PUBLIC_storageBucket;
+
 const PostCard = ({ item }) => {
   const [userInfo, setUserInfo] = useState({});
+  const [profileImage, setProfileImage] = useState(null);
+  const [postImage, setPostImage] = useState(null);
   const [bottomSheetStatus, setBottomSheetStatus] = useState(false);
+  const [liked, setLiked] = useState(false);
 
   likeIcon = item.liked ? "heart" : "heart-outlined";
   likeIconColor = item.liked ? "#510600" : "#002D02";
 
-  if (item.likes == 1) {
+  if (item.likes.length == 1) {
     likeText = "1 Like";
-  } else if (item.likes > 1) {
-    likeText = item.likes + " Likes";
+  } else if (item.likes.length > 1) {
+    likeText = item.likes.length + " Likes";
   } else {
     likeText = "Like";
   }
 
-  if (item.comments == 1) {
+  if (item.comments.length == 1) {
     commentText = "1 Comment";
-  } else if (item.comments > 1) {
-    commentText = item.comments + " Comments";
+  } else if (item.comments.length > 1) {
+    commentText = item.comments.length + " Comments";
   } else {
     commentText = "Comment";
   }
@@ -68,10 +73,25 @@ const PostCard = ({ item }) => {
       querySnapshot.forEach((doc) => {
         const userData = doc.data();
         setUserInfo(userData);
+        setProfileImage(preFetchImage(userData.profile_url));
       });
     };
     getUser();
   }, []);
+
+  const getImageUrlToShow = (image) => {
+    const imageUrl = `https://firebasestorage.googleapis.com/v0/b/${storageBucket}/o/${encodeURIComponent(
+      image
+    )}?alt=media`;
+
+    return imageUrl;
+  };
+
+  const preFetchImage = (image) => {
+    const imageRef = getImageUrlToShow(image);
+
+    return imageRef;
+  };
 
   const renderComment = () => {
     setBottomSheetStatus(true);
@@ -81,16 +101,15 @@ const PostCard = ({ item }) => {
     <View style={{ alignItems: "center" }}>
       <Card key={item.id} style={styles.postShadow}>
         <UserInfo>
-          <UserImg source={item.userImg} />
+          {profileImage&&(<UserImg source={{uri: profileImage}} />)}
           <UserInfoText>
-            <UserName>{item.userName}</UserName>
-            {/* <PostTime>{moment(item.postTime.toDate()).fromNow()}</PostTime> */}
-            <PostTime>{item.postTime}</PostTime>
+            <UserName>{userInfo? userInfo.firstName: ""}{" "}{userInfo? userInfo.lastName: ""}</UserName>
+            <PostTime>{moment(item.postedTime.toDate()).fromNow()}</PostTime>
           </UserInfoText>
         </UserInfo>
-        <PostText>{item.post}</PostText>
+        <PostText>{item.postDescription}</PostText>
         {item.postImg != null ? (
-          <PostImg source={item.postImg} resizeMode="cover" />
+          <PostImg source={{uri: preFetchImage(item.postImg)}} resizeMode="cover" />
         ) : (
           <Divider />
         )}
@@ -126,7 +145,7 @@ const PostCard = ({ item }) => {
                 <ListItem.Content style={styles.singleCommentContainer}>
                   <Image
                     style={styles.commentViewProfilePhoto}
-                    source={require("../assets/users/user-8.jpg")}
+                    source={require("../assets/placeholder.png")}
                   />
                   <ListItem.Content
                     style={styles.singleCommentContainerWithoutProfile}

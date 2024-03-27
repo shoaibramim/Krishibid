@@ -17,6 +17,7 @@ import {
 } from "../styles/PostStyle";
 import moment from "moment";
 import { auth, db } from "../firebase";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   collection,
   getDocs,
@@ -25,6 +26,9 @@ import {
   Timestamp,
   updateDoc,
   doc,
+  getDoc,
+  arrayRemove,
+  arrayUnion,
 } from "firebase/firestore";
 import {
   Image,
@@ -34,36 +38,64 @@ import {
   View,
   StyleSheet,
   TextInput,
+  FlatList,
 } from "react-native";
 import { BottomSheet, ListItem } from "@rneui/base";
 
-const storageBucket= process.env.EXPO_PUBLIC_storageBucket;
+const storageBucket = process.env.EXPO_PUBLIC_storageBucket;
 
 const PostCard = ({ item }) => {
   const [userInfo, setUserInfo] = useState({});
+  const [posterInfo, setPosterInfo] = useState({});
   const [profileImage, setProfileImage] = useState(null);
-  const [postImage, setPostImage] = useState(null);
   const [bottomSheetStatus, setBottomSheetStatus] = useState(false);
   const [liked, setLiked] = useState(false);
+  const [postData, setPostData] = useState(null);
+  const [comments, setComments] = useState([]);
+  const [commentInput, setCommentInput] = useState("");
+  const [likes, setLikes] = useState([]);
+  const [commentatorImage, setCommentatorImage] = useState(null);
+  const [commentatorName, setCommentatorName] = useState("");
 
-  likeIcon = item.liked ? "heart" : "heart-outlined";
-  likeIconColor = item.liked ? "#510600" : "#002D02";
+  likeIcon = liked ? "heart" : "heart-outlined";
+  likeIconColor = liked ? "#510600" : "#002D02";
 
-  if (item.likes.length == 1) {
+  if (likes.length == 1) {
     likeText = "1 Like";
-  } else if (item.likes.length > 1) {
-    likeText = item.likes.length + " Likes";
+  } else if (likes.length > 1) {
+    likeText = likes.length + " Likes";
   } else {
     likeText = "Like";
   }
 
-  if (item.comments.length == 1) {
+  if (comments.length == 1) {
     commentText = "1 Comment";
-  } else if (item.comments.length > 1) {
-    commentText = item.comments.length + " Comments";
+  } else if (comments.length > 1) {
+    commentText = comments.length + " Comments";
   } else {
     commentText = "Comment";
   }
+
+  useEffect(() => {
+    const getUser = async () => {
+      const userData = await AsyncStorage.getItem("userData");
+      if (userData) {
+        const user = JSON.parse(userData);
+        setUserInfo(user);
+      } else {
+        const usersRef = collection(db, "users");
+        const q = query(usersRef, where("email", "==", auth.currentUser.email));
+        const querySnapshot = await getDocs(q);
+        querySnapshot.forEach((doc) => {
+          const userData = doc.data();
+          setUserInfo(userData);
+        });
+      }
+    };
+    getUser();
+  }, []);
+
+  const { user_id } = userInfo;
 
   useEffect(() => {
     const getUser = async () => {
@@ -72,7 +104,7 @@ const PostCard = ({ item }) => {
       const querySnapshot = await getDocs(q);
       querySnapshot.forEach((doc) => {
         const userData = doc.data();
-        setUserInfo(userData);
+        setPosterInfo(userData);
         setProfileImage(preFetchImage(userData.profile_url));
       });
     };
@@ -93,33 +125,145 @@ const PostCard = ({ item }) => {
     return imageRef;
   };
 
-  const renderComment = () => {
-    setBottomSheetStatus(true);
+  const fetchPostData = async () => {
+    try {
+      const postDoc = await getDoc(doc(db, "posts", item.id));
+      const tempPostData = postDoc.data();
+      setPostData(tempPostData);
+      setComments(tempPostData.comments);
+      setLikes(tempPostData.likes);
+      if (tempPostData.likes.includes(user_id) == true) {
+        setLiked(true);
+      }
+    } catch (error) {
+      console.error("Error fetching post data:", error);
+    }
+  };
+
+  const removeLike = async () => {
+    try {
+      await updateDoc(doc(db, "posts", item.id), {
+        likes: arrayRemove(user_id),
+      });
+      const tempLikes = likes.filter((item) => item != user_id);
+      setLikes(tempLikes);
+      setLiked(false);
+    } catch (error) {
+      console.error("Error removing like:", error);
+    }
+  };
+
+  const addLike = async () => {
+    try {
+      await updateDoc(doc(db, "posts", item.id), {
+        likes: arrayUnion(user_id),
+      });
+      setLikes([...likes, user_id]);
+      setLiked(true);
+    } catch (error) {
+      console.error("Error adding likes:", error);
+    }
+  };
+
+  const newLikeOrRemoveLike = () => {
+    if (likes.includes(user_id) == true) {
+      ///Remove the Like
+      removeLike();
+    } else {
+      ///new Like + remove dislike
+      addLike();
+    }
+  };
+
+  useEffect(() => {
+    fetchPostData();
+  }, [item.id]);
+
+  const AddANewComment = async () => {
+    const date = new Date();
+
+    const newCommentInfo = {
+      commentDescription: commentInput,
+      user_id: user_id,
+      timestamp: date,
+    };
+    try {
+      await updateDoc(doc(db, "posts", item.id), {
+        comments: [...comments, newCommentInfo],
+      });
+      setComments([...comments, newCommentInfo]);
+      setCommentInput("");
+    } catch (error) {
+      console.error("Error adding comment:", error);
+    }
+  };
+
+  const renderComment = async (comment) => {
+    const usersRef = collection(db, "users");
+    const q = query(usersRef, where("user_id", "==", comment.user_id));
+    const querySnapshot = await getDocs(q);
+    querySnapshot.forEach((doc) => {
+      const userData = doc.data();
+      setCommentatorImage(preFetchImage(userData.profile_url));
+      setCommentatorName(`${userData.firstName}${" "}${userData.lastName}`);
+    });
+
+    return (
+      <ScrollView style={styles.singleCommentContainer}>
+        {commentatorImage && (
+          <Image
+            style={styles.commentViewProfilePhoto}
+            source={{ uri: commentatorImage }}
+          />
+        )}
+        <View style={styles.singleCommentContainerWithoutProfile}>
+          {commentatorName && (
+            <Text style={styles.commentatorName}>{commentatorName}</Text>
+          )}
+          <Text style={styles.commentMessage}>
+            {comment.commentDescription}
+          </Text>
+          <Text style={styles.commentTime}>
+            {moment(comment.timestamp.toDate()).fromNow()}
+          </Text>
+        </View>
+      </ScrollView>
+    );
   };
 
   return (
     <View style={{ alignItems: "center" }}>
       <Card key={item.id} style={styles.postShadow}>
         <UserInfo>
-          {profileImage&&(<UserImg source={{uri: profileImage}} />)}
+          {profileImage && <UserImg source={{ uri: profileImage }} />}
           <UserInfoText>
-            <UserName>{userInfo? userInfo.firstName: ""}{" "}{userInfo? userInfo.lastName: ""}</UserName>
+            <UserName>
+              {posterInfo ? posterInfo.firstName : ""}{" "}
+              {posterInfo ? posterInfo.lastName : ""}
+            </UserName>
             <PostTime>{moment(item.postedTime.toDate()).fromNow()}</PostTime>
           </UserInfoText>
         </UserInfo>
         <PostText>{item.postDescription}</PostText>
         {item.postImg != null ? (
-          <PostImg source={{uri: preFetchImage(item.postImg)}} resizeMode="cover" />
+          <PostImg
+            source={{ uri: preFetchImage(item.postImg) }}
+            resizeMode="cover"
+          />
         ) : (
           <Divider />
         )}
 
         <InteractionWrapper>
-          <Interaction>
+          <Interaction onPress={newLikeOrRemoveLike}>
             <Entypo name={likeIcon} size={25} color={likeIconColor} />
             <InteractionText>{likeText}</InteractionText>
           </Interaction>
-          <Interaction onPress={renderComment}>
+          <Interaction
+            onPress={() => {
+              setBottomSheetStatus(true);
+            }}
+          >
             <FontAwesome name="commenting" size={24} color="#002D02" />
             <InteractionText>{commentText}</InteractionText>
           </Interaction>
@@ -140,31 +284,26 @@ const PostCard = ({ item }) => {
                 <Text style={styles.commentViewHeadline}>Comments</Text>
               </ListItem.Content>
             </ListItem>
-            <ScrollView showsVerticalScrollIndicator={false}>
-              <ListItem>
-                <ListItem.Content style={styles.singleCommentContainer}>
-                  <Image
-                    style={styles.commentViewProfilePhoto}
-                    source={require("../assets/placeholder.png")}
-                  />
-                  <ListItem.Content
-                    style={styles.singleCommentContainerWithoutProfile}
-                  >
-                    <Text style={styles.commentatorName}>Mikasa Ackerman</Text>
-                    <Text style={styles.commentMessage}>
-                      Stunning Photo... Colors looks so accurate and feels like
-                      refreshing no matter how long I keep looking at this
-                      photo!!
-                    </Text>
-                    <Text style={styles.commentTime}>3 Hours ago</Text>
-                  </ListItem.Content>
-                </ListItem.Content>
-              </ListItem>
-            </ScrollView>
+            <ListItem>
+              <ListItem.Content>
+                {comments.map((comment) => renderComment(comment))}
+              </ListItem.Content>
+            </ListItem>
             <ListItem>
               <ListItem.Content style={styles.addCommentContainer}>
-                  <TextInput style={styles.commentTextInputBox} placeholder="Write a comment..." multiline={true} />
+                <TextInput
+                  style={styles.commentTextInputBox}
+                  placeholder="Write a comment..."
+                  multiline={true}
+                  value={commentInput}
+                  onChangeText={(text) => setCommentInput(text)}
+                />
+                <TouchableOpacity
+                  disabled={commentInput.trim().length == 0}
+                  onPress={AddANewComment}
+                >
                   <Ionicons name="send" size={32} color="#002D02" />
+                </TouchableOpacity>
               </ListItem.Content>
             </ListItem>
           </BottomSheet>

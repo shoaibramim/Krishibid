@@ -7,6 +7,8 @@ import {
   ActivityIndicator,
   ImageBackground,
   Alert,
+  FlatList,
+  ScrollView,
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import {
@@ -27,14 +29,19 @@ import {
   Timestamp,
   updateDoc,
   doc,
+  orderBy,
+  limit,
+  startAfter,
+  limitToLast,
+  endBefore,
 } from "firebase/firestore";
 import moment from "moment";
 import * as ImagePicker from "expo-image-picker";
 import { BottomSheet, ListItem } from "@rneui/base";
+import { useIsFocused } from "@react-navigation/native";
+import PostCard from "../components/PostCard";
 
-const storageBucket= process.env.EXPO_PUBLIC_storageBucket;
-
-
+const storageBucket = process.env.EXPO_PUBLIC_storageBucket;
 
 export default function Profile(props) {
   const { navigation, route } = props;
@@ -46,6 +53,14 @@ export default function Profile(props) {
   const [imageUri, setImageUri] = useState(null);
   const [formattedDate, setFormattedDate] = useState(null);
   const [bottomSheetStatus, setBottomSheetStatus] = useState(false);
+
+  const [posts, setPosts] = useState([]);
+  const [firstPostReached, setFirstPostReached] = useState(true);
+  const [lastPostReached, setLastPostReached] = useState(false);
+  const [pageLastPostRef, setPageLastPostRef] = useState(null);
+  const [pageFirstPostRef, setPageFirstPostRef] = useState(null);
+
+  const isFocused = useIsFocused();
 
   useEffect(() => {
     const getUser = async () => {
@@ -97,19 +112,18 @@ export default function Profile(props) {
       console.error(error);
     }
   };
-  
-  const updateAsyncData= async(profile_url)=>{
-    let temp= userInfo;
-    temp.profile_url= profile_url;
-    AsyncStorage.setItem('userData', JSON.stringify(temp))
-                    .then(() => {
-                         console.log('Data stored successfully!')
-                    })
-                    .catch((error) => {
-                         console.log('Failed to store data locally: ', error);
-                    });
-  }
 
+  const updateAsyncData = async (profile_url) => {
+    let temp = userInfo;
+    temp.profile_url = profile_url;
+    AsyncStorage.setItem("userData", JSON.stringify(temp))
+      .then(() => {
+        console.log("Data stored successfully!");
+      })
+      .catch((error) => {
+        console.log("Failed to store data locally: ", error);
+      });
+  };
 
   const getImageUrlToShow = (image) => {
     const imageUrl = `https://firebasestorage.googleapis.com/v0/b/${storageBucket}/o/${encodeURIComponent(
@@ -195,9 +209,113 @@ export default function Profile(props) {
     }
   };
 
+  const fetchPosts = async () => {
+    try {
+      setLoading(true);
+      setFirstPostReached(false);
+      const list = [];
+      const postsRef = collection(db, "posts");
+      let q = query(
+        postsRef,
+        where("user_id", "==", userInfo.user_id),
+        orderBy("postedTime", "desc"),
+        limit(3),
+      );
+      if (pageLastPostRef) {
+        q = query(q, startAfter(pageLastPostRef));
+      }
+      const querySnapshot = await getDocs(q);
+      if (querySnapshot.size < 1) {
+        setLastPostReached(true);
+      } else {
+        querySnapshot.forEach((doc) => {
+          const {
+            post_id,
+            user_id,
+            postDescription,
+            postImg,
+            postedTime,
+            likes,
+            comments,
+          } = doc.data();
+          list.push({
+            id: post_id,
+            user_id,
+            postDescription,
+            postImg,
+            postedTime,
+            likes,
+            comments,
+          });
+        });
+        setPosts(list);
+        setPageFirstPostRef(list[0].post_id);
+        setPageLastPostRef(list[list.length - 1].post_id);
+      }
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching blogs:", error);
+      setLoading(false);
+    }
+  };
+
+  const fetchPrevPosts = async () => {
+    try {
+      setLoading(true);
+      setLastPostReached(false);
+      const list = [];
+      const postsRef = collection(db, "posts");
+      let q = query(
+        postsRef,
+        where("user_id", "==", userInfo.user_id),
+        orderBy("postedTime", "desc"),
+        limitToLast(3),
+      );
+      if (pageLastPostRef) {
+        q = query(q, endBefore(pageFirstPostRef));
+      }
+      const querySnapshot = await getDocs(q);
+      if (querySnapshot.size < 1) {
+        setFirstPostReached(true);
+      } else {
+        querySnapshot.forEach((doc) => {
+          const {
+            post_id,
+            user_id,
+            postDescription,
+            postImg,
+            postedTime,
+            likes,
+            comments,
+          } = doc.data();
+          list.push({
+            id: post_id,
+            user_id,
+            postDescription,
+            postImg,
+            postedTime,
+            likes,
+            comments,
+          });
+        });
+        setPosts(list);
+        setPageFirstPostRef(list[0].post_id);
+        setPageLastPostRef(list[list.length - 1].post_id);
+      }
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching blogs:", error);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPosts();
+  }, [isFocused]);
+
   const handleSignOut = async () => {
     setLoading(true);
-    await AsyncStorage.removeItem('userData');
+    await AsyncStorage.removeItem("userData");
     await auth.signOut();
     navigation.replace("StarterScreen");
     setLoading(false);
@@ -209,137 +327,170 @@ export default function Profile(props) {
 
   return (
     <View style={styles.container} onLayout={onLayoutRootView}>
-      <View style={styles.profileInfo}>
-        <TouchableOpacity
-          onPress={() => {
-            setBottomSheetStatus(true);
-          }}
-        >
-          <ImageBackground
-            style={{ height: 120, width: 120 }}
-            imageStyle={{
-              borderRadius: 100,
-              borderWidth: 3,
-              borderColor: "#002D02",
+      <ScrollView>
+        <View style={styles.profileInfo}>
+          <TouchableOpacity
+            onPress={() => {
+              setBottomSheetStatus(true);
             }}
-            source={{ uri: imageUri }}
           >
-            <View style={styles.editProfilePic}>
-              {loading ? (
-                <ActivityIndicator size={24} color={"white"} />
-              ) : (
-                <Entypo name="camera" size={24} color="white" />
-              )}
-            </View>
-          </ImageBackground>
-        </TouchableOpacity>
-        <BottomSheet
-          isVisible={bottomSheetStatus}
-          style={styles.profileBottomSheetBG}
-        >
-          <ListItem>
-            <ListItem.Content style={[styles.basicFlexStyle]}>
-              <TouchableOpacity
-                style={styles.bottomSheetBtnStyle}
-                onPress={openCamera}
-              >
-                <Entypo name="camera" size={28} color="#F9FAFB" />
-                <Text style={styles.bottomSheetBtnTextStyle}>
-                  &nbsp; Camera
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.bottomSheetBtnStyle}
-                onPress={openGallery}
-              >
-                <FontAwesome name="photo" size={28} color="#F9FAFB" />
-                <Text style={styles.bottomSheetBtnTextStyle}>
-                  &nbsp; Gallery
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.bottomSheetBtnStyle}
-                onPress={() => {
-                  setBottomSheetStatus(false);
-                }}
-              >
-                <FontAwesome name="close" size={28} color="#F9FAFB" />
-                <Text style={styles.bottomSheetBtnTextStyle}>&nbsp; Close</Text>
-              </TouchableOpacity>
-            </ListItem.Content>
-          </ListItem>
-        </BottomSheet>
+            <ImageBackground
+              style={{ height: 120, width: 120 }}
+              imageStyle={{
+                borderRadius: 100,
+                borderWidth: 3,
+                borderColor: "#002D02",
+              }}
+              source={{ uri: imageUri }}
+            >
+              <View style={styles.editProfilePic}>
+                {loading ? (
+                  <ActivityIndicator size={24} color={"white"} />
+                ) : (
+                  <Entypo name="camera" size={24} color="white" />
+                )}
+              </View>
+            </ImageBackground>
+          </TouchableOpacity>
+          <BottomSheet
+            isVisible={bottomSheetStatus}
+            style={styles.profileBottomSheetBG}
+          >
+            <ListItem>
+              <ListItem.Content style={[styles.basicFlexStyle]}>
+                <TouchableOpacity
+                  style={styles.bottomSheetBtnStyle}
+                  onPress={openCamera}
+                >
+                  <Entypo name="camera" size={28} color="#F9FAFB" />
+                  <Text style={styles.bottomSheetBtnTextStyle}>
+                    &nbsp; Camera
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.bottomSheetBtnStyle}
+                  onPress={openGallery}
+                >
+                  <FontAwesome name="photo" size={28} color="#F9FAFB" />
+                  <Text style={styles.bottomSheetBtnTextStyle}>
+                    &nbsp; Gallery
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.bottomSheetBtnStyle}
+                  onPress={() => {
+                    setBottomSheetStatus(false);
+                  }}
+                >
+                  <FontAwesome name="close" size={28} color="#F9FAFB" />
+                  <Text style={styles.bottomSheetBtnTextStyle}>
+                    &nbsp; Close
+                  </Text>
+                </TouchableOpacity>
+              </ListItem.Content>
+            </ListItem>
+          </BottomSheet>
 
-        <Text style={styles.profileName}>
-          {Object.keys(userInfo).length > 0
-            ? userInfo.firstName + " " + userInfo.lastName
-            : ""}
-        </Text>
-        <Text style={styles.profileUsername}>
-          {Object.keys(userInfo).length > 0 ? `@${userInfo.username}` : ""}
-        </Text>
-        <View style={{ flexDirection: "row", padding: 5 }}>
-          <TouchableOpacity
-            style={styles.buttonFlexBox}
-            onPress={goToEditProfile}
-          >
-            <MaterialCommunityIcons name="pencil" size={18} color="white" />
-            <Text style={styles.buttonText}>
-              {loading ? (
-                <ActivityIndicator size={22} color={"#fff"} />
-              ) : (
-                "Edit Profile"
-              )}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.buttonFlexBox}
-            onPress={handleSignOut}
-          >
-            <AntDesign name="logout" size={18} color="white" />
-            <Text style={styles.buttonText}>
-              {loading ? (
-                <ActivityIndicator size={22} color={"#fff"} />
-              ) : (
-                "Log Out"
-              )}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-      <View style={styles.detailStyle}>
-        <View style={{ flexDirection: "row", paddingBottom: 5, gap: 17 }}>
-          <MaterialIcons name="location-pin" size={20} color="#002D02" />
-          <Text style={styles.detailTextStyle}>
+          <Text style={styles.profileName}>
             {Object.keys(userInfo).length > 0
-              ? userInfo.location.city + ", " + userInfo.location.state
+              ? userInfo.firstName + " " + userInfo.lastName
               : ""}
           </Text>
-        </View>
-        <View style={{ flexDirection: "row", paddingBottom: 5, gap: 10 }}>
-          <FontAwesome name="graduation-cap" size={20} color="#002D02" />
-          <Text style={styles.detailTextStyle}>
-            {Object.keys(userInfo).length > 0
-              ? userInfo.educationalInstitute
-              : ""}
+          <Text style={styles.profileUsername}>
+            {Object.keys(userInfo).length > 0 ? `@${userInfo.username}` : ""}
           </Text>
+          <View style={{ flexDirection: "row", padding: 5 }}>
+            <TouchableOpacity
+              style={styles.buttonFlexBox}
+              onPress={goToEditProfile}
+            >
+              <MaterialCommunityIcons name="pencil" size={18} color="white" />
+              <Text style={styles.buttonText}>
+                {loading ? (
+                  <ActivityIndicator size={22} color={"#fff"} />
+                ) : (
+                  "Edit Profile"
+                )}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.buttonFlexBox}
+              onPress={handleSignOut}
+            >
+              <AntDesign name="logout" size={18} color="white" />
+              <Text style={styles.buttonText}>
+                {loading ? (
+                  <ActivityIndicator size={22} color={"#fff"} />
+                ) : (
+                  "Log Out"
+                )}
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
-        <View style={{ flexDirection: "row", paddingBottom: 5, gap: 15 }}>
-          <FontAwesome name="birthday-cake" size={20} color="#002D02" />
-          <Text style={styles.detailTextStyle}>
-            {Object.keys(userInfo).length > 0 ? userInfo.dob : ""}
-          </Text>
+        <View style={styles.detailStyle}>
+          <View style={{ flexDirection: "row", paddingBottom: 5, gap: 17 }}>
+            <MaterialIcons name="location-pin" size={20} color="#002D02" />
+            <Text style={styles.detailTextStyle}>
+              {Object.keys(userInfo).length > 0
+                ? userInfo.location.city + ", " + userInfo.location.state
+                : ""}
+            </Text>
+          </View>
+          <View style={{ flexDirection: "row", paddingBottom: 5, gap: 10 }}>
+            <FontAwesome name="graduation-cap" size={20} color="#002D02" />
+            <Text style={styles.detailTextStyle}>
+              {Object.keys(userInfo).length > 0
+                ? userInfo.educationalInstitute
+                : ""}
+            </Text>
+          </View>
+          <View style={{ flexDirection: "row", paddingBottom: 5, gap: 15 }}>
+            <FontAwesome name="birthday-cake" size={20} color="#002D02" />
+            <Text style={styles.detailTextStyle}>
+              {Object.keys(userInfo).length > 0 ? userInfo.dob : ""}
+            </Text>
+          </View>
+          <View style={{ flexDirection: "row", paddingBottom: 5, gap: 10 }}>
+            <FontAwesome5 name="user-clock" size={20} color="#002D02" />
+            <Text style={styles.detailTextStyle}>
+              {formattedDate ? `Joined: ${formattedDate}` : ""}
+            </Text>
+          </View>
         </View>
-        <View style={{ flexDirection: "row", paddingBottom: 5, gap: 10 }}>
-          <FontAwesome5 name="user-clock" size={20} color="#002D02" />
-          <Text style={styles.detailTextStyle}>
-            {formattedDate ? `Joined: ${formattedDate}` : ""}
-          </Text>
-        </View>
-      </View>
-      <View style={styles.postContainer}>
         <Text style={styles.recentPostsText}>Recent Posts</Text>
-      </View>
+        {loading ? (
+          <ActivityIndicator size={40} color={"#002D02"} />
+        ) : (
+          <View>
+            <FlatList
+              data={posts}
+              renderItem={({ item }) => <PostCard item={item} />}
+              keyExtractor={(item) => item.id}
+              scrollEnabled={false}
+            />
+            <View style={styles.flexRow}>
+              <TouchableOpacity
+                style={{ flexDirection: "row", alignItems: "center" }}
+                disabled={firstPostReached}
+                onPress={fetchPrevPosts}
+              >
+                <Entypo name="chevron-left" size={32} color="#002D02" />
+                <Text style={styles.detailTextStyle}>Previous</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={{ flexDirection: "row", alignItems: "center" }}
+                disabled={lastPostReached}
+                onPress={fetchPosts}
+              >
+                <Text style={styles.detailTextStyle}>Next</Text>
+                <Entypo name="chevron-right" size={32} color="#002D02" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+        <View style={{ marginTop: 60 }}></View>
+      </ScrollView>
     </View>
   );
 }
@@ -446,6 +597,8 @@ const styles = StyleSheet.create({
     fontFamily: "DMBold",
     fontSize: 28,
     color: "#002D02",
+    textAlign: "center",
+    marginBottom: 5,
   },
   profileBottomSheetBG: {
     backgroundColor: "white",
@@ -481,5 +634,10 @@ const styles = StyleSheet.create({
     fontFamily: "DMBold",
     fontSize: 28,
     color: "#F9FAFB",
+  },
+  flexRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginHorizontal: 5
   },
 });

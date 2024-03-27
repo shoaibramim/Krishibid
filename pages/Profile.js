@@ -57,8 +57,8 @@ export default function Profile(props) {
   const [posts, setPosts] = useState([]);
   const [firstPostReached, setFirstPostReached] = useState(true);
   const [lastPostReached, setLastPostReached] = useState(false);
-  const [pageLastPostRef, setPageLastPostRef] = useState(null);
-  const [pageFirstPostRef, setPageFirstPostRef] = useState(null);
+  const [pageLastPostPostedTime, setPageLastPostPostedTime] = useState(null);
+  const [pageFirstPostPostedTime, setPageFirstPostPostedTime] = useState(null);
 
   const isFocused = useIsFocused();
 
@@ -213,16 +213,16 @@ export default function Profile(props) {
     try {
       setLoading(true);
       setFirstPostReached(false);
-      const list = [];
+      let list = [];
       const postsRef = collection(db, "posts");
       let q = query(
         postsRef,
         where("user_id", "==", userInfo.user_id),
         orderBy("postedTime", "desc"),
-        limit(3)
+        limit(2)
       );
-      if (pageLastPostRef) {
-        q = query(q, startAfter(pageLastPostRef));
+      if (pageLastPostPostedTime) {
+        q = query(q, startAfter(pageLastPostPostedTime));
       }
       const querySnapshot = await getDocs(q);
       if (querySnapshot.size < 1) {
@@ -248,9 +248,10 @@ export default function Profile(props) {
             comments,
           });
         });
+
         setPosts(list);
-        setPageFirstPostRef(list[0].post_id);
-        setPageLastPostRef(list[list.length - 1].post_id);
+        setPageFirstPostPostedTime(list[0].postedTime);
+        setPageLastPostPostedTime(list[list.length - 1].postedTime);
       }
       setLoading(false);
     } catch (error) {
@@ -263,16 +264,16 @@ export default function Profile(props) {
     try {
       setLoading(true);
       setLastPostReached(false);
-      const list = [];
+      let list = [];
       const postsRef = collection(db, "posts");
       let q = query(
         postsRef,
         where("user_id", "==", userInfo.user_id),
         orderBy("postedTime", "desc"),
-        limitToLast(3)
+        limitToLast(2)
       );
-      if (pageLastPostRef) {
-        q = query(q, endBefore(pageFirstPostRef));
+      if (pageLastPostPostedTime) {
+        q = query(q, endBefore(pageFirstPostPostedTime));
       }
       const querySnapshot = await getDocs(q);
       if (querySnapshot.size < 1) {
@@ -299,8 +300,8 @@ export default function Profile(props) {
           });
         });
         setPosts(list);
-        setPageFirstPostRef(list[0].post_id);
-        setPageLastPostRef(list[list.length - 1].post_id);
+        setPageFirstPostPostedTime(list[0].postedTime);
+        setPageLastPostPostedTime(list[list.length - 1].postedTime);
       }
       setLoading(false);
     } catch (error) {
@@ -311,6 +312,9 @@ export default function Profile(props) {
 
   useEffect(() => {
     if (Object.keys(userInfo).length > 0) fetchPosts();
+
+    setPageFirstPostPostedTime(null);
+    setPageLastPostPostedTime(null);
   }, [isFocused, userInfo]);
 
   const handleSignOut = async () => {
@@ -327,7 +331,7 @@ export default function Profile(props) {
 
   return (
     <View style={styles.container} onLayout={onLayoutRootView}>
-      <ScrollView>
+      <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.profileInfo}>
           <TouchableOpacity
             onPress={() => {

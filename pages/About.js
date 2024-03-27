@@ -14,7 +14,7 @@ import {
   Modal,
   SafeAreaView,
 } from "react-native";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { WebView } from "react-native-webview";
 import MapView, { Marker } from "react-native-maps";
 import * as Location from "expo-location";
@@ -40,6 +40,8 @@ import {
 import "firebase/auth";
 import { getAuth } from "firebase/auth";
 
+import { gsap, Back } from "gsap-rn";
+
 export default function About(props) {
   const { navigation, route } = props;
   const onLayoutRootView = route.params.onLayoutRootView;
@@ -57,6 +59,17 @@ export default function About(props) {
 
   const [currentLocation, setCurrentLocation] = useState(null);
   const [initialRegion, setInitialRegion] = useState(null);
+
+  const imageRef = useRef(null);
+
+  useEffect(() => {
+    const ref = imageRef.current;
+    gsap.to(ref, {
+      duration: 2,
+      transform: { rotate: 360, scale: 1 },
+      ease: Back.easeInOut,
+    });
+  }, []);
 
   useEffect(() => {
     const getUser = async () => {
@@ -359,59 +372,78 @@ export default function About(props) {
           </View>
           <View>
             <Text style={styles.textHeadline}>Review Krishibid</Text>
-           <View style={styles.reviewingOptionContainer}>
-           {loading ? (
-              <ActivityIndicator size={50} color={"#002D02"} />
-            ) : (
-              <View style={{ alignItems: "center"}}>
-                <Text style={styles.textHeadline}>
-                  Average Rating: {averageRating.toFixed(2)}
-                </Text>
-                {hasGivenReview? (<Text style={styles.textDescription}>Your Review</Text>): (<Text style={styles.textDescription}>Provide a Review</Text>)}
-                <AirbnbRating
-                  count={10}
-                  reviewColor="#002D02"
-                  selectedColor="#002D02"
-                  unSelectedColor="#D8EBD9"
-                  reviews={[
-                    "Terrible",
-                    "Bad",
-                    "Meh",
-                    "OK",
-                    "Good",
-                    "Hmm...",
-                    "Very Good",
-                    "Wow",
-                    "Amazing",
-                    "Unbelievable",
-                  ]}
-                  defaultRating={rating}
-                  size={20}
-                  reviewSize={40}
-                  onFinishRating={(rating) => {
-                    setRating(rating);
-                  }}
-                />
-                <TextInput
-                  value={review}
-                  multiline={true}
-                  placeholder="What do you think about the App?"
-                  style={styles.input}
-                  onChangeText={(text) => {
-                    setReview(text);
-                  }}
-                ></TextInput>
-                <TouchableOpacity
-                  onPress={() => handleSubmitReview()}
-                  style={styles.buttonFlexBox}
-                >
-                  <Text style={styles.buttonText}>
-                    {hasGivenReview ? "Update Review" : "Submit Review"}
+            <View style={styles.reviewingOptionContainer}>
+              {loading ? (
+                <ActivityIndicator size={50} color={"#002D02"} />
+              ) : (
+                <View style={{ alignItems: "center" }}>
+                  <Text style={styles.textHeadline}>
+                    Average Rating: {averageRating.toFixed(2)}
                   </Text>
-                </TouchableOpacity>
-              </View>
-            )}
-           </View>
+                  {hasGivenReview ? (
+                    <Text style={styles.textDescription}>Your Review</Text>
+                  ) : (
+                    <Text style={styles.textDescription}>Provide a Review</Text>
+                  )}
+                  <AirbnbRating
+                    count={10}
+                    reviewColor="#002D02"
+                    selectedColor="#002D02"
+                    unSelectedColor="#D8EBD9"
+                    reviews={[
+                      "Terrible",
+                      "Bad",
+                      "Meh",
+                      "OK",
+                      "Good",
+                      "Hmm...",
+                      "Very Good",
+                      "Wow",
+                      "Amazing",
+                      "Unbelievable",
+                    ]}
+                    defaultRating={rating}
+                    size={20}
+                    reviewSize={40}
+                    onFinishRating={(rating) => {
+                      setRating(rating);
+                    }}
+                  />
+                  <TextInput
+                    value={review}
+                    multiline={true}
+                    placeholder="What do you think about the App?"
+                    style={styles.input}
+                    onChangeText={(text) => {
+                      setReview(text);
+                    }}
+                  ></TextInput>
+                  <TouchableOpacity
+                    onPress={() => handleSubmitReview()}
+                    style={styles.buttonFlexBox}
+                  >
+                    <Text style={styles.buttonText}>
+                      {hasGivenReview ? "Update Review" : "Submit Review"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          </View>
+          <View
+            style={{
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <Text style={styles.textHeadline}>
+              Thanks for staying with us..
+            </Text>
+            <Image
+              style={styles.imageContainer}
+              source={require("../assets/Brand-logo.png")}
+              ref={imageRef}
+            />
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -539,5 +571,10 @@ const styles = StyleSheet.create({
     borderColor: "#002D02",
     borderRadius: 6,
     marginBottom: 10,
+  },
+  imageContainer: {
+    padding: 10,
+    height: 100,
+    width: "50%",
   },
 });

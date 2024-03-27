@@ -56,9 +56,11 @@ const PostCard = ({ item }) => {
   const [likes, setLikes] = useState([]);
   const [commentatorImage, setCommentatorImage] = useState(null);
   const [commentatorName, setCommentatorName] = useState("");
+  const [likeIcon, setLikeIcon] = useState("heart-outlined");
+  const [likeIconColor, setLikeIconColor] = useState("#002D02");
 
-  likeIcon = liked ? "heart" : "heart-outlined";
-  likeIconColor = liked ? "#510600" : "#002D02";
+  //likeIcon = liked ? "heart" : "heart-outlined";
+  // likeIconColor = liked ? "#510600" : "#002D02";
 
   if (likes.length == 1) {
     likeText = "1 Like";
@@ -77,7 +79,7 @@ const PostCard = ({ item }) => {
   }
 
   useEffect(() => {
-    const getUser = async () => {
+    const getCurrentUser = async () => {
       const userData = await AsyncStorage.getItem("userData");
       if (userData) {
         const user = JSON.parse(userData);
@@ -92,7 +94,7 @@ const PostCard = ({ item }) => {
         });
       }
     };
-    getUser();
+    getCurrentUser();
   }, []);
 
   const { user_id } = userInfo;
@@ -108,8 +110,10 @@ const PostCard = ({ item }) => {
         setProfileImage(preFetchImage(userData.profile_url));
       });
     };
-    getUser();
-  }, []);
+    if (item.id) {
+      getUser();
+    }
+  }, [item.id]);
 
   const getImageUrlToShow = (image) => {
     const imageUrl = `https://firebasestorage.googleapis.com/v0/b/${storageBucket}/o/${encodeURIComponent(
@@ -125,20 +129,41 @@ const PostCard = ({ item }) => {
     return imageRef;
   };
 
-  const fetchPostData = async () => {
-    try {
-      const postDoc = await getDoc(doc(db, "posts", item.id));
-      const tempPostData = postDoc.data();
-      setPostData(tempPostData);
-      setComments(tempPostData.comments);
-      setLikes(tempPostData.likes);
-      if (tempPostData.likes.includes(user_id) == true) {
-        setLiked(true);
+  useEffect(() => {
+    const fetchPostData = async () => {
+      try {
+        const postDoc = await getDoc(doc(db, "posts", item.id));
+        const tempPostData = postDoc.data();
+        setPostData(tempPostData);
+        setComments(tempPostData.comments);
+        setLikes(tempPostData.likes);
+      } catch (error) {
+        console.error("Error fetching post data: ", error);
       }
-    } catch (error) {
-      console.error("Error fetching post data:", error);
+    };
+    fetchPostData();
+  }, [item.id]);
+  const updateLikeIcon= async (likes, user_id)=>{
+    if (likes.includes(user_id) == true) {
+      setLikeIcon("heart");
+      setLikeIconColor("#510600");
     }
-  };
+    else{
+      setLikeIcon("heart-outlined");
+      setLikeIconColor("#002D02");
+    }
+  }
+
+  useEffect(() => {
+    if(likes.length>0){
+      updateLikeIcon(likes, userInfo.user_id);
+    }
+    else{
+      setLikeIcon("heart-outlined");
+      setLikeIconColor("#002D02");
+    }
+  }, [likes]);
+  
 
   const removeLike = async () => {
     try {
@@ -147,7 +172,6 @@ const PostCard = ({ item }) => {
       });
       const tempLikes = likes.filter((item) => item != user_id);
       setLikes(tempLikes);
-      setLiked(false);
     } catch (error) {
       console.error("Error removing like:", error);
     }
@@ -159,7 +183,6 @@ const PostCard = ({ item }) => {
         likes: arrayUnion(user_id),
       });
       setLikes([...likes, user_id]);
-      setLiked(true);
     } catch (error) {
       console.error("Error adding likes:", error);
     }
@@ -174,10 +197,6 @@ const PostCard = ({ item }) => {
       addLike();
     }
   };
-
-  useEffect(() => {
-    fetchPostData();
-  }, [item.id]);
 
   const AddANewComment = async () => {
     const date = new Date();
@@ -209,7 +228,7 @@ const PostCard = ({ item }) => {
     });
 
     return (
-      <ScrollView style={styles.singleCommentContainer}>
+      <View>
         {commentatorImage && (
           <Image
             style={styles.commentViewProfilePhoto}
@@ -227,7 +246,7 @@ const PostCard = ({ item }) => {
             {moment(comment.timestamp.toDate()).fromNow()}
           </Text>
         </View>
-      </ScrollView>
+      </View>
     );
   };
 

@@ -55,41 +55,42 @@ export default function Feed(props) {
     getUser();
   }, []);
 
-  const fetchPosts = async () => {
-    try {
-      setLoading(true);
-      const list = [];
-      const postsRef = collection(db, "posts");
-      const q = query(postsRef, orderBy("postedTime", "desc"));
-      const querySnapshot = await getDocs(q);
-      querySnapshot.forEach((doc) => {
-        const {
-          post_id,
-          user_id,
-          postDescription,
-          postImg,
-          postedTime,
-          likes,
-          comments,
-        } = doc.data();
-        list.push({
-          id: post_id,
-          user_id,
-          postDescription,
-          postImg,
-          postedTime,
-          likes,
-          comments,
-        });
-      });
-      setPosts(list);
-      setLoading(false);
-    } catch (error) {
-      console.error("Error fetching blogs:", error);
-    }
-  };
+  
 
   useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        setLoading(true);
+        const list = [];
+        const postsRef = collection(db, "posts");
+        const q = query(postsRef, orderBy("postedTime", "desc"));
+        const querySnapshot = await getDocs(q);
+        querySnapshot.forEach((doc) => {
+          const {
+            post_id,
+            user_id,
+            postDescription,
+            postImg,
+            postedTime,
+            likes,
+            comments,
+          } = doc.data();
+          list.push({
+            id: post_id,
+            user_id,
+            postDescription,
+            postImg,
+            postedTime,
+            likes,
+            comments,
+          });
+        });
+        setPosts(list);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching blogs:", error);
+      }
+    };
     fetchPosts();
   }, [isFocused]);
 

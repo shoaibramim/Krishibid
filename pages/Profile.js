@@ -219,7 +219,7 @@ export default function Profile(props) {
         postsRef,
         where("user_id", "==", userInfo.user_id),
         orderBy("postedTime", "desc"),
-        limit(3),
+        limit(3)
       );
       if (pageLastPostRef) {
         q = query(q, startAfter(pageLastPostRef));
@@ -269,7 +269,7 @@ export default function Profile(props) {
         postsRef,
         where("user_id", "==", userInfo.user_id),
         orderBy("postedTime", "desc"),
-        limitToLast(3),
+        limitToLast(3)
       );
       if (pageLastPostRef) {
         q = query(q, endBefore(pageFirstPostRef));
@@ -310,8 +310,8 @@ export default function Profile(props) {
   };
 
   useEffect(() => {
-    fetchPosts();
-  }, [isFocused]);
+    if (Object.keys(userInfo).length > 0) fetchPosts();
+  }, [isFocused, userInfo]);
 
   const handleSignOut = async () => {
     setLoading(true);
@@ -638,6 +638,6 @@ const styles = StyleSheet.create({
   flexRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginHorizontal: 5
+    marginHorizontal: 5,
   },
 });

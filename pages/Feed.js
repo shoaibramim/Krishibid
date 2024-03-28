@@ -23,7 +23,7 @@ import {
   doc,
   orderBy,
 } from "firebase/firestore";
-import { useIsFocused } from '@react-navigation/native';
+import { useIsFocused } from "@react-navigation/native";
 import PostCard from "../components/PostCard";
 
 export default function Feed(props) {
@@ -54,8 +54,6 @@ export default function Feed(props) {
     };
     getUser();
   }, []);
-
-  
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -91,8 +89,8 @@ export default function Feed(props) {
         console.error("Error fetching blogs:", error);
       }
     };
-    fetchPosts();
-  }, [isFocused]);
+    if (Object.keys(userInfo).length > 0) fetchPosts();
+  }, [isFocused, userInfo]);
 
   const goToClickOrSelectImage = () => {
     navigation.push("ClickOrSelectImage");
@@ -101,35 +99,35 @@ export default function Feed(props) {
   return (
     <View style={styles.container} onLayout={onLayoutRootView}>
       <SafeAreaView>
-        {loading? (
-          <View style={{justifyContent: "center", alignItems: "center"}}>
+        {loading ? (
+          <View style={{ justifyContent: "center", alignItems: "center" }}>
             <ActivityIndicator size={50} color={"#002D02"} />
             <Text style={styles.loadingTextStyle}>Loading posts...</Text>
           </View>
-        ): (
+        ) : (
           <ScrollView showsVerticalScrollIndicator={false}>
-          <View style={[styles.greetingCard, styles.flexRow]}>
-            <Text style={styles.textStyle}>
-              Greetings,{" "}
-              <Text style={{ fontFamily: "DMBold" }}>
-                {Object.keys(userInfo).length > 0 ? userInfo.firstName : ""}
+            <View style={[styles.greetingCard, styles.flexRow]}>
+              <Text style={styles.textStyle}>
+                Greetings,{" "}
+                <Text style={{ fontFamily: "DMBold" }}>
+                  {Object.keys(userInfo).length > 0 ? userInfo.firstName : ""}
+                </Text>
               </Text>
-            </Text>
-            <TouchableOpacity
-              style={styles.classifyButtonBox}
-              onPress={goToClickOrSelectImage}
-            >
-              <Entypo name="camera" size={32} color="white" />
-            </TouchableOpacity>
-          </View>
+              <TouchableOpacity
+                style={styles.classifyButtonBox}
+                onPress={goToClickOrSelectImage}
+              >
+                <Entypo name="camera" size={32} color="white" />
+              </TouchableOpacity>
+            </View>
             <FlatList
               data={posts}
               renderItem={({ item }) => <PostCard item={item} />}
               keyExtractor={(item) => item.id}
               scrollEnabled={false}
             />
-          <View style={{ marginTop: 60 }}></View>
-        </ScrollView>
+            <View style={{ marginTop: 60 }}></View>
+          </ScrollView>
         )}
       </SafeAreaView>
     </View>

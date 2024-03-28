@@ -49,16 +49,15 @@ export default function Profile(props) {
 
   const [loading, setLoading] = useState(false);
   const [userInfo, setUserInfo] = useState({});
-  const [newImageUri, setnewImageUri] = useState(null);
   const [imageUri, setImageUri] = useState(null);
   const [formattedDate, setFormattedDate] = useState(null);
   const [bottomSheetStatus, setBottomSheetStatus] = useState(false);
 
-  const [posts, setPosts] = useState([]);
-  const [firstPostReached, setFirstPostReached] = useState(true);
-  const [lastPostReached, setLastPostReached] = useState(false);
+  const [currentUserPosts, setCurrentUserPosts] = useState([]);
   const [pageLastPostPostedTime, setPageLastPostPostedTime] = useState(null);
   const [pageFirstPostPostedTime, setPageFirstPostPostedTime] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPostsNumber, setTotalPostsNumber] = useState(0);
 
   const isFocused = useIsFocused();
 
@@ -136,7 +135,6 @@ export default function Profile(props) {
   const preFetchDP = (userProfilePic) => {
     const imageRef = getImageUrlToShow(userProfilePic);
     setImageUri(imageRef);
-    setnewImageUri(imageRef);
   };
 
   useEffect(() => {
@@ -209,25 +207,44 @@ export default function Profile(props) {
     }
   };
 
-  const fetchPosts = async () => {
-    try {
-      setLoading(true);
-      setFirstPostReached(false);
-      let list = [];
-      const postsRef = collection(db, "posts");
-      let q = query(
-        postsRef,
-        where("user_id", "==", userInfo.user_id),
-        orderBy("postedTime", "desc"),
-        limit(2)
-      );
-      if (pageLastPostPostedTime) {
-        q = query(q, startAfter(pageLastPostPostedTime));
+  const postsPerPage = 2;
+  useEffect(() => {
+    const countTotalPosts = async () => {
+      try {
+        setLoading(true);
+        const postsRef = collection(db, "posts");
+        const q = query(postsRef, where("user_id", "==", userInfo.user_id));
+        const querySnapshot = await getDocs(q);
+        setTotalPostsNumber(querySnapshot.size);
+
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching blogs:", error);
+        setLoading(false);
       }
-      const querySnapshot = await getDocs(q);
-      if (querySnapshot.size < 1) {
-        setLastPostReached(true);
-      } else {
+    };
+    if (Object.keys(userInfo).length > 0) {
+      countTotalPosts();
+    }
+  }, [userInfo]);
+
+  const fetchPosts = async () => {
+    if (Object.keys(userInfo).length > 0) {
+      try {
+        setLoading(true);
+        setCurrentPage(currentPage + 1);
+        let list = [];
+        const postsRef = collection(db, "posts");
+        let q = query(
+          postsRef,
+          where("user_id", "==", userInfo.user_id),
+          orderBy("postedTime", "desc"),
+          limit(postsPerPage)
+        );
+        if (pageLastPostPostedTime) {
+          q = query(q, startAfter(pageLastPostPostedTime));
+        }
+        const querySnapshot = await getDocs(q);
         querySnapshot.forEach((doc) => {
           const {
             post_id,
@@ -249,36 +266,34 @@ export default function Profile(props) {
           });
         });
 
-        setPosts(list);
+        setCurrentUserPosts(list);
         setPageFirstPostPostedTime(list[0].postedTime);
         setPageLastPostPostedTime(list[list.length - 1].postedTime);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching blogs: ", error);
+        setLoading(false);
       }
-      setLoading(false);
-    } catch (error) {
-      console.error("Error fetching blogs:", error);
-      setLoading(false);
     }
   };
 
   const fetchPrevPosts = async () => {
-    try {
-      setLoading(true);
-      setLastPostReached(false);
-      let list = [];
-      const postsRef = collection(db, "posts");
-      let q = query(
-        postsRef,
-        where("user_id", "==", userInfo.user_id),
-        orderBy("postedTime", "desc"),
-        limitToLast(2)
-      );
-      if (pageLastPostPostedTime) {
-        q = query(q, endBefore(pageFirstPostPostedTime));
-      }
-      const querySnapshot = await getDocs(q);
-      if (querySnapshot.size < 1) {
-        setFirstPostReached(true);
-      } else {
+    if (Object.keys(userInfo).length > 0) {
+      try {
+        setLoading(true);
+        setCurrentPage(currentPage - 1);
+        let list = [];
+        const postsRef = collection(db, "posts");
+        let q = query(
+          postsRef,
+          where("user_id", "==", userInfo.user_id),
+          orderBy("postedTime", "desc"),
+          limitToLast(postsPerPage)
+        );
+        if (pageLastPostPostedTime) {
+          q = query(q, endBefore(pageFirstPostPostedTime));
+        }
+        const querySnapshot = await getDocs(q);
         querySnapshot.forEach((doc) => {
           const {
             post_id,
@@ -299,22 +314,70 @@ export default function Profile(props) {
             comments,
           });
         });
-        setPosts(list);
+        setCurrentUserPosts(list);
         setPageFirstPostPostedTime(list[0].postedTime);
         setPageLastPostPostedTime(list[list.length - 1].postedTime);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching blogs: ", error);
+        setLoading(false);
       }
-      setLoading(false);
-    } catch (error) {
-      console.error("Error fetching blogs:", error);
-      setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (Object.keys(userInfo).length > 0) fetchPosts();
-
     setPageFirstPostPostedTime(null);
     setPageLastPostPostedTime(null);
+    setCurrentPage(1);
+    setTotalPostsNumber(0);
+
+    const fetchFirstFewPosts = async () => {
+      try {
+        setLoading(true);
+        let list = [];
+        const postsRef = collection(db, "posts");
+        let q = query(
+          postsRef,
+          where("user_id", "==", userInfo.user_id),
+          orderBy("postedTime", "desc"),
+          limit(postsPerPage)
+        );
+        if (pageLastPostPostedTime) {
+          q = query(q, startAfter(pageLastPostPostedTime));
+        }
+        const querySnapshot = await getDocs(q);
+        querySnapshot.forEach((doc) => {
+          const {
+            post_id,
+            user_id,
+            postDescription,
+            postImg,
+            postedTime,
+            likes,
+            comments,
+          } = doc.data();
+          list.push({
+            id: post_id,
+            user_id,
+            postDescription,
+            postImg,
+            postedTime,
+            likes,
+            comments,
+          });
+        });
+
+        setCurrentUserPosts(list);
+        setPageFirstPostPostedTime(list[0].postedTime);
+        setPageLastPostPostedTime(list[list.length - 1].postedTime);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching blogs: ", error);
+        setLoading(false);
+      }
+    };
+
+    if (Object.keys(userInfo).length > 0) fetchFirstFewPosts();
   }, [isFocused, userInfo]);
 
   const handleSignOut = async () => {
@@ -468,23 +531,34 @@ export default function Profile(props) {
         ) : (
           <View>
             <FlatList
-              data={posts}
+              data={currentUserPosts}
               renderItem={({ item }) => <PostCard item={item} />}
               keyExtractor={(item) => item.id}
               scrollEnabled={false}
             />
             <View style={styles.flexRow}>
               <TouchableOpacity
-                style={{ flexDirection: "row", alignItems: "center" }}
-                disabled={firstPostReached}
+                style={[
+                  styles.paginationButton,
+                  currentPage === 1 && { opacity: 0.5 },
+                ]}
+                disabled={currentPage === 1}
                 onPress={fetchPrevPosts}
               >
                 <Entypo name="chevron-left" size={32} color="#002D02" />
                 <Text style={styles.detailTextStyle}>Previous</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={{ flexDirection: "row", alignItems: "center" }}
-                disabled={lastPostReached}
+                style={[
+                  styles.paginationButton,
+                  currentPage ===
+                    Math.ceil(totalPostsNumber / postsPerPage) && {
+                    opacity: 0.5,
+                  },
+                ]}
+                disabled={
+                  currentPage === Math.ceil(totalPostsNumber / postsPerPage)
+                }
                 onPress={fetchPosts}
               >
                 <Text style={styles.detailTextStyle}>Next</Text>
@@ -643,5 +717,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginHorizontal: 5,
+  },
+  paginationButton: {
+    flexDirection: "row",
+    alignItems: "center",
   },
 });

@@ -339,7 +339,7 @@ export default function SignUp(props) {
           entering={FadeInDown.delay(300).duration(1000).springify()}
         >
           {loading ? (<ActivityIndicator size={22} color={"#002D02"} />) : (
-            <TouchableOpacity style={styles.buttonFlexBox} onPress={handleSingUp}>
+            <TouchableOpacity style={styles.buttonFlexBox} onPress={handleSingUp} disabled={password.length < 1 || email.length < 1 || (password !== confirmPassword)}>
               <FontAwesome name="user" size={24} color="#ffffff" />
               <Text style={styles.buttonText}>Sign Up
               </Text>

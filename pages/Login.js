@@ -182,7 +182,7 @@ export default function Login(props) {
           entering={FadeInDown.delay(300).duration(1000).springify()}
         >
           {loading ? (<ActivityIndicator size={22} color={"#002D02"} />) : (
-            <TouchableOpacity style={styles.buttonFlexBox} onPress={handleLogin} disabled={password.length < 0 || email.length < 0}>
+            <TouchableOpacity style={styles.buttonFlexBox} onPress={handleLogin} disabled={password.length < 1 || email.length < 1}>
               <FontAwesome name="user" size={24} color="#ffffff" />
               <Text style={styles.buttonText}>
                 Log in

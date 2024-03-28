@@ -33,9 +33,9 @@ import { BottomSheet, ListItem } from "@rneui/base";
 import { Dropdown } from 'react-native-element-dropdown';
 import axios from 'axios';
 
-const BASE_URL= process.env.EXPO_PUBLIC_BASE_URL;
-const API_KEY= process.env.EXPO_PUBLIC_API_KEY;
-const storageBucket= process.env.EXPO_PUBLIC_storageBucket;
+const BASE_URL = process.env.EXPO_PUBLIC_BASE_URL;
+const API_KEY = process.env.EXPO_PUBLIC_API_KEY;
+const storageBucket = process.env.EXPO_PUBLIC_storageBucket;
 
 export default function EditProfile(props) {
   const { navigation, route } = props;
@@ -229,7 +229,7 @@ export default function EditProfile(props) {
       });
   };
 
-  const handleSubmit=async()=>{
+  const handleSubmit = async () => {
     try {
     } catch (error) {
       console.error(error);
@@ -281,7 +281,7 @@ export default function EditProfile(props) {
               <Text style={styles.bottomSheetBtnTextStyle}>&nbsp; Gallery</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.bottomSheetBtnStyle}
+              style={styles.bottomSheetCloseBtnStyle}
               onPress={() => {
                 setBottomSheetStatus(false);
               }}
@@ -352,54 +352,54 @@ export default function EditProfile(props) {
           }} />
       </View>
       <View style={styles.flexRow}>
-          <View style={[styles.textInputStyle, styles.textInputStyleWidth50]}>
+        <View style={[styles.textInputStyle, styles.textInputStyleWidth50]}>
           <Dropdown
-          style={[styles.textInputFlexBox]}
-          placeholderStyle={styles.placeholderStyle}
-          selectedTextStyle={styles.selectedTextStyle}
-          inputSearchStyle={styles.inputSearchStyle}
-          iconStyle={styles.iconStyle}
-          data={stateData}
-          search
-          maxHeight={200}
-          labelField="label"
-          valueField="value"
-          placeholder={!isFocus ? `${Object.keys(userInfo).length > 0 ? userInfo.state : ""}` : '...'}
-          searchPlaceholder="Search..."
-          value={state}
-          onFocus={() => setIsFocus(true)}
-          onBlur={() => setIsFocus(false)}
-          onChange={item => {
-            setState(item.value);
-            handleCity(country, item.value);
-            setStateName(item.label);
-            setIsFocus(false);
-          }} />
-          </View>
-          <View style={[styles.textInputStyle, styles.textInputStyleWidth50]}>
-          <Dropdown
-          style={[styles.textInputFlexBox]}
-          placeholderStyle={styles.placeholderStyle}
-          selectedTextStyle={styles.selectedTextStyle}
-          inputSearchStyle={styles.inputSearchStyle}
-          iconStyle={styles.iconStyle}
-          data={cityData}
-          search
-          maxHeight={200}
-          labelField="label"
-          valueField="value"
-          placeholder={!isFocus ? `${Object.keys(userInfo).length > 0 ? userInfo.city : ""}` : '...'}
-          searchPlaceholder="Search..."
-          value={city}
-          onFocus={() => setIsFocus(true)}
-          onBlur={() => setIsFocus(false)}
-          onChange={item => {
-            setCity(item.value);
-            setCityName(item.label);
-            setIsFocus(false);
-          }} />
-          </View>
+            style={[styles.textInputFlexBox]}
+            placeholderStyle={styles.placeholderStyle}
+            selectedTextStyle={styles.selectedTextStyle}
+            inputSearchStyle={styles.inputSearchStyle}
+            iconStyle={styles.iconStyle}
+            data={stateData}
+            search
+            maxHeight={200}
+            labelField="label"
+            valueField="value"
+            placeholder={!isFocus ? `${Object.keys(userInfo).length > 0 ? userInfo.state : ""}` : '...'}
+            searchPlaceholder="Search..."
+            value={state}
+            onFocus={() => setIsFocus(true)}
+            onBlur={() => setIsFocus(false)}
+            onChange={item => {
+              setState(item.value);
+              handleCity(country, item.value);
+              setStateName(item.label);
+              setIsFocus(false);
+            }} />
         </View>
+        <View style={[styles.textInputStyle, styles.textInputStyleWidth50]}>
+          <Dropdown
+            style={[styles.textInputFlexBox]}
+            placeholderStyle={styles.placeholderStyle}
+            selectedTextStyle={styles.selectedTextStyle}
+            inputSearchStyle={styles.inputSearchStyle}
+            iconStyle={styles.iconStyle}
+            data={cityData}
+            search
+            maxHeight={200}
+            labelField="label"
+            valueField="value"
+            placeholder={!isFocus ? `${Object.keys(userInfo).length > 0 ? userInfo.city : ""}` : '...'}
+            searchPlaceholder="Search..."
+            value={city}
+            onFocus={() => setIsFocus(true)}
+            onBlur={() => setIsFocus(false)}
+            onChange={item => {
+              setCity(item.value);
+              setCityName(item.label);
+              setIsFocus(false);
+            }} />
+        </View>
+      </View>
       <View style={styles.textInputStyle}>
         <Text style={styles.textInputText}>Date of Birth</Text>
         <TouchableOpacity
@@ -434,12 +434,14 @@ export default function EditProfile(props) {
           />
         )}
       </View>
-      <TouchableOpacity style={styles.buttonFlexBox} onPress={handleSubmit}>
-        <Feather name="upload" size={22} color="white" />
-        <Text style={styles.buttonText}>
-          {loading ? <ActivityIndicator size={18} color={"#fff"} /> : "Update"}
-        </Text>
-      </TouchableOpacity>
+      {loading ? (<ActivityIndicator size={22} color={"#002D02"} />) : (
+        <TouchableOpacity style={styles.buttonFlexBox} onPress={handleSubmit}>
+          <Feather name="upload" size={22} color="white" />
+          <Text style={styles.buttonText}>Update
+          </Text>
+        </TouchableOpacity>
+      )}
+
     </View>
   );
 }
@@ -608,6 +610,18 @@ const styles = StyleSheet.create({
   },
   bottomSheetBtnStyle: {
     backgroundColor: "#002D02",
+    width: "90%",
+    height: "auto",
+    padding: 10,
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 20,
+    margin: 5,
+  },
+  bottomSheetCloseBtnStyle: {
+    backgroundColor: "#510600",
     width: "90%",
     height: "auto",
     padding: 10,

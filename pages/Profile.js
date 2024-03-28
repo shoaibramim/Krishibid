@@ -47,7 +47,10 @@ export default function Profile(props) {
   const { navigation, route } = props;
   const onLayoutRootView = route.params.onLayoutRootView;
 
-  const [loading, setLoading] = useState(false);
+  const [loadingForUpload, setLoadingForUpload] = useState(false);
+  const [loadingForEditProfile, setLoadingForEditProfile] = useState(false);
+  const [loadingForLogOut, setLoadingForLogOut] = useState(false);
+  const [loadingForFetchPosts, setloadingForFetchPosts] = useState(false);
   const [userInfo, setUserInfo] = useState({});
   const [imageUri, setImageUri] = useState(null);
   const [formattedDate, setFormattedDate] = useState(null);
@@ -84,9 +87,9 @@ export default function Profile(props) {
     try {
       const response = await fetch(
         "https://firebasestorage.googleapis.com/v0/b/" +
-          storageBucket +
-          "/o?name=" +
-          fileName,
+        storageBucket +
+        "/o?name=" +
+        fileName,
         {
           method: "POST",
           headers: {
@@ -164,7 +167,7 @@ export default function Profile(props) {
         setImageUri(result.assets[0].uri);
         setBottomSheetStatus(false);
 
-        setLoading(true);
+        setLoadingForUpload(true);
         const timestamp = new Date().getTime();
         const fileName = `images/ProfilePhotos/${userInfo.user_id}_${timestamp}.jpg`;
         await updateOnFirebase(
@@ -172,7 +175,7 @@ export default function Profile(props) {
           result.assets[0].uri,
           userInfo.user_id
         );
-        setLoading(false);
+        setLoadingForUpload(false);
       }
     } else {
       alert("Camera permission not granted");
@@ -192,7 +195,7 @@ export default function Profile(props) {
         setImageUri(result.assets[0].uri);
         setBottomSheetStatus(false);
 
-        setLoading(true);
+        setLoadingForUpload(true);
         const timestamp = new Date().getTime();
         const fileName = `images/ProfilePhotos/${userInfo.user_id}_${timestamp}.jpg`;
         await updateOnFirebase(
@@ -200,7 +203,7 @@ export default function Profile(props) {
           result.assets[0].uri,
           userInfo.user_id
         );
-        setLoading(false);
+        setLoadingForUpload(false);
       }
     } catch (error) {
       console.log(error);
@@ -211,27 +214,27 @@ export default function Profile(props) {
   useEffect(() => {
     const countTotalPosts = async () => {
       try {
-        setLoading(true);
+        setloadingForFetchPosts(true);
         const postsRef = collection(db, "posts");
         const q = query(postsRef, where("user_id", "==", userInfo.user_id));
         const querySnapshot = await getDocs(q);
         setTotalPostsNumber(querySnapshot.size);
 
-        setLoading(false);
+        setloadingForFetchPosts(false);
       } catch (error) {
-        console.error("Error fetching blogs:", error);
-        setLoading(false);
+        console.error("Error counting posts:", error);
+        setloadingForFetchPosts(false);
       }
     };
-    if (Object.keys(userInfo).length > 0) {
+    if (isFocused && Object.keys(userInfo).length > 0) {
       countTotalPosts();
     }
-  }, [userInfo]);
+  }, [isFocused, userInfo]);
 
   const fetchPosts = async () => {
     if (Object.keys(userInfo).length > 0) {
       try {
-        setLoading(true);
+        setloadingForFetchPosts(true);
         setCurrentPage(currentPage + 1);
         let list = [];
         const postsRef = collection(db, "posts");
@@ -269,10 +272,10 @@ export default function Profile(props) {
         setCurrentUserPosts(list);
         setPageFirstPostPostedTime(list[0].postedTime);
         setPageLastPostPostedTime(list[list.length - 1].postedTime);
-        setLoading(false);
+        setloadingForFetchPosts(false);
       } catch (error) {
-        console.error("Error fetching blogs: ", error);
-        setLoading(false);
+        console.error("Error fetching posts: ", error);
+        setloadingForFetchPosts(false);
       }
     }
   };
@@ -280,7 +283,7 @@ export default function Profile(props) {
   const fetchPrevPosts = async () => {
     if (Object.keys(userInfo).length > 0) {
       try {
-        setLoading(true);
+        setloadingForFetchPosts(true);
         setCurrentPage(currentPage - 1);
         let list = [];
         const postsRef = collection(db, "posts");
@@ -317,10 +320,10 @@ export default function Profile(props) {
         setCurrentUserPosts(list);
         setPageFirstPostPostedTime(list[0].postedTime);
         setPageLastPostPostedTime(list[list.length - 1].postedTime);
-        setLoading(false);
+        setloadingForFetchPosts(false);
       } catch (error) {
-        console.error("Error fetching blogs: ", error);
-        setLoading(false);
+        console.error("Error fetching previous posts: ", error);
+        setloadingForFetchPosts(false);
       }
     }
   };
@@ -329,11 +332,10 @@ export default function Profile(props) {
     setPageFirstPostPostedTime(null);
     setPageLastPostPostedTime(null);
     setCurrentPage(1);
-    setTotalPostsNumber(0);
 
     const fetchFirstFewPosts = async () => {
       try {
-        setLoading(true);
+        setloadingForFetchPosts(true);
         let list = [];
         const postsRef = collection(db, "posts");
         let q = query(
@@ -370,22 +372,22 @@ export default function Profile(props) {
         setCurrentUserPosts(list);
         setPageFirstPostPostedTime(list[0].postedTime);
         setPageLastPostPostedTime(list[list.length - 1].postedTime);
-        setLoading(false);
+        setloadingForFetchPosts(false);
       } catch (error) {
-        console.error("Error fetching blogs: ", error);
-        setLoading(false);
+        console.error("Error fetching first few posts: ", error);
+        setloadingForFetchPosts(false);
       }
     };
 
-    if (Object.keys(userInfo).length > 0) fetchFirstFewPosts();
-  }, [isFocused, userInfo]);
+    if (isFocused && Object.keys(userInfo).length > 0 && totalPostsNumber) fetchFirstFewPosts();
+  }, [isFocused, userInfo, totalPostsNumber]);
 
   const handleSignOut = async () => {
-    setLoading(true);
+    setLoadingForLogOut(true);
     await AsyncStorage.removeItem("userData");
     await auth.signOut();
     navigation.replace("StarterScreen");
-    setLoading(false);
+    setLoadingForLogOut(false);
   };
 
   const goToEditProfile = () => {
@@ -411,7 +413,7 @@ export default function Profile(props) {
               source={{ uri: imageUri }}
             >
               <View style={styles.editProfilePic}>
-                {loading ? (
+                {loadingForUpload ? (
                   <ActivityIndicator size={24} color={"white"} />
                 ) : (
                   <Entypo name="camera" size={24} color="white" />
@@ -444,7 +446,7 @@ export default function Profile(props) {
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={styles.bottomSheetBtnStyle}
+                  style={styles.bottomSheetCloseBtnStyle}
                   onPress={() => {
                     setBottomSheetStatus(false);
                   }}
@@ -467,32 +469,33 @@ export default function Profile(props) {
             {Object.keys(userInfo).length > 0 ? `@${userInfo.username}` : ""}
           </Text>
           <View style={{ flexDirection: "row", padding: 5 }}>
-            <TouchableOpacity
-              style={styles.buttonFlexBox}
-              onPress={goToEditProfile}
-            >
-              <MaterialCommunityIcons name="pencil" size={18} color="white" />
-              <Text style={styles.buttonText}>
-                {loading ? (
-                  <ActivityIndicator size={22} color={"#fff"} />
-                ) : (
-                  "Edit Profile"
-                )}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.buttonFlexBox}
-              onPress={handleSignOut}
-            >
-              <AntDesign name="logout" size={18} color="white" />
-              <Text style={styles.buttonText}>
-                {loading ? (
-                  <ActivityIndicator size={22} color={"#fff"} />
-                ) : (
-                  "Log Out"
-                )}
-              </Text>
-            </TouchableOpacity>
+            {loadingForEditProfile ? (
+              <ActivityIndicator size={22} color={"#002D02"} />
+            ) : (
+              <TouchableOpacity
+                style={styles.buttonFlexBox}
+                onPress={goToEditProfile}
+              >
+                <MaterialCommunityIcons name="pencil" size={18} color="white" />
+                <Text style={styles.buttonText}>
+                  Edit Profile
+                </Text>
+              </TouchableOpacity>
+            )}
+            {loadingForLogOut ? (
+              <ActivityIndicator size={22} color={"#002D02"} />
+            ) : (
+              <TouchableOpacity
+                style={styles.buttonFlexBox}
+                onPress={handleSignOut}
+              >
+                <AntDesign name="logout" size={18} color="white" />
+                <Text style={styles.buttonText}>
+                  Log Out
+                </Text>
+              </TouchableOpacity>
+            )}
+
           </View>
         </View>
         <View style={styles.detailStyle}>
@@ -526,7 +529,7 @@ export default function Profile(props) {
           </View>
         </View>
         <Text style={styles.recentPostsText}>Recent Posts</Text>
-        {loading ? (
+        {loadingForFetchPosts ? (
           <ActivityIndicator size={40} color={"#002D02"} />
         ) : (
           <View>
@@ -551,13 +554,14 @@ export default function Profile(props) {
               <TouchableOpacity
                 style={[
                   styles.paginationButton,
-                  currentPage ===
-                    Math.ceil(totalPostsNumber / postsPerPage) && {
+                  (currentPage ===
+                    Math.ceil(totalPostsNumber / postsPerPage) || totalPostsNumber <= postsPerPage) && {
                     opacity: 0.5,
                   },
                 ]}
                 disabled={
                   currentPage === Math.ceil(totalPostsNumber / postsPerPage)
+                  || totalPostsNumber < postsPerPage
                 }
                 onPress={fetchPosts}
               >
@@ -698,6 +702,18 @@ const styles = StyleSheet.create({
   },
   bottomSheetBtnStyle: {
     backgroundColor: "#002D02",
+    width: "90%",
+    height: "auto",
+    padding: 10,
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 20,
+    margin: 5,
+  },
+  bottomSheetCloseBtnStyle: {
+    backgroundColor: "#510600",
     width: "90%",
     height: "auto",
     padding: 10,

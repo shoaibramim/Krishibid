@@ -338,16 +338,14 @@ export default function SignUp(props) {
         <Animated.View
           entering={FadeInDown.delay(300).duration(1000).springify()}
         >
-          <TouchableOpacity style={styles.buttonFlexBox} onPress={handleSingUp}>
-            <FontAwesome name="user" size={24} color="#ffffff" />
-            <Text style={styles.buttonText}>
-              {loading ? (
-                <ActivityIndicator size={18} color={"#fff"} />
-              ) : (
-                "Sign Up"
-              )}
-            </Text>
-          </TouchableOpacity>
+          {loading ? (<ActivityIndicator size={22} color={"#002D02"} />) : (
+            <TouchableOpacity style={styles.buttonFlexBox} onPress={handleSingUp}>
+              <FontAwesome name="user" size={24} color="#ffffff" />
+              <Text style={styles.buttonText}>Sign Up
+              </Text>
+            </TouchableOpacity>
+          )}
+
         </Animated.View>
 
         <Animated.View

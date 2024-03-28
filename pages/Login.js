@@ -38,36 +38,36 @@ export default function Login(props) {
         const q = query(usersRef, where("email", "==", email));
         const querySnapshot = await getDocs(q);
         querySnapshot.forEach((doc) => {
-            const userData = doc.data();
-            const loggedUserInfo = {
-                user_id: userData.user_id,
-                email: userData.email,
-                username: userData.username,
-                firstName: userData.firstName,
-                lastName: userData.lastName,
-                profile_url: userData.profile_url,
-                dob: userData.dob,
-                joiningDate: userData.joiningDate,
-                educationalInstitute: userData.educationalInstitute,
-                location: {
-                  country: userData.location.country,
-                  state: userData.location.state,
-                  city: userData.location.city
-                }
-            };
-            if (isRememberMeChecked) {
-                const loggedUserInfoString = JSON.stringify(loggedUserInfo);
-                AsyncStorage.setItem('userData', loggedUserInfoString)
-                    .then(() => {
-                         console.log('Data stored successfully!')
-                    })
-                    .catch((error) => {
-                         console.log('Failed to store data locally: ', error);
-                    });
+          const userData = doc.data();
+          const loggedUserInfo = {
+            user_id: userData.user_id,
+            email: userData.email,
+            username: userData.username,
+            firstName: userData.firstName,
+            lastName: userData.lastName,
+            profile_url: userData.profile_url,
+            dob: userData.dob,
+            joiningDate: userData.joiningDate,
+            educationalInstitute: userData.educationalInstitute,
+            location: {
+              country: userData.location.country,
+              state: userData.location.state,
+              city: userData.location.city
             }
-            setEmail('');
-            setPassword('');
-          });
+          };
+          if (isRememberMeChecked) {
+            const loggedUserInfoString = JSON.stringify(loggedUserInfo);
+            AsyncStorage.setItem('userData', loggedUserInfoString)
+              .then(() => {
+                console.log('Data stored successfully!')
+              })
+              .catch((error) => {
+                console.log('Failed to store data locally: ', error);
+              });
+          }
+          setEmail('');
+          setPassword('');
+        });
         navigation.popToTop();
         navigation.replace("BottomTabs");
       } else {
@@ -159,13 +159,13 @@ export default function Login(props) {
           entering={FadeInDown.delay(400).duration(1000).springify()}
           style={styles.checkboxContainer}
         >
-         <Checkbox
-                    style={styles.checkbox}
-                    status={isRememberMeChecked ? 'checked' : 'unchecked'}
-                    onPress={() => {setIsRememberMeChecked(!isRememberMeChecked);}}
-                    color={isRememberMeChecked ? "#002D02" : undefined}
-                />
-                <Text onPress={() => {setIsRememberMeChecked(!isRememberMeChecked);}} style={styles.checkboxLabel}>Keep Me Logged In</Text> 
+          <Checkbox
+            style={styles.checkbox}
+            status={isRememberMeChecked ? 'checked' : 'unchecked'}
+            onPress={() => { setIsRememberMeChecked(!isRememberMeChecked); }}
+            color={isRememberMeChecked ? "#002D02" : undefined}
+          />
+          <Text onPress={() => { setIsRememberMeChecked(!isRememberMeChecked); }} style={styles.checkboxLabel}>Keep Me Logged In</Text>
         </Animated.View>
         {error.length > 0 && (
           <Text
@@ -181,16 +181,15 @@ export default function Login(props) {
         <Animated.View
           entering={FadeInDown.delay(300).duration(1000).springify()}
         >
-          <TouchableOpacity style={styles.buttonFlexBox} onPress={handleLogin}>
-            <FontAwesome name="user" size={24} color="#ffffff" />
-            <Text style={styles.buttonText}>
-              {loading ? (
-                <ActivityIndicator size={18} color={"#fff"} />
-              ) : (
-                "Log in"
-              )}
-            </Text>
-          </TouchableOpacity>
+          {loading ? (<ActivityIndicator size={22} color={"#002D02"} />) : (
+            <TouchableOpacity style={styles.buttonFlexBox} onPress={handleLogin} disabled={password.length < 0 || email.length < 0}>
+              <FontAwesome name="user" size={24} color="#ffffff" />
+              <Text style={styles.buttonText}>
+                Log in
+              </Text>
+            </TouchableOpacity>
+          )}
+
         </Animated.View>
 
         <Animated.View
@@ -323,7 +322,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginHorizontal: 10,
     paddingLeft: 20,
-    width:'auto',
+    width: 'auto',
     alignContent: "center",
     alignItems: "center",
   },

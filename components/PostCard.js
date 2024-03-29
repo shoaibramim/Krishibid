@@ -41,6 +41,7 @@ import {
   FlatList,
 } from "react-native";
 import { BottomSheet, ListItem } from "@rneui/base";
+import RenderComment from "./RenderComment";
 
 const storageBucket = process.env.EXPO_PUBLIC_storageBucket;
 
@@ -61,6 +62,8 @@ const PostCard = ({ item }) => {
 
   //likeIcon = liked ? "heart" : "heart-outlined";
   // likeIconColor = liked ? "#510600" : "#002D02";
+  const usersRef = collection(db, "users");
+
 
   if (likes.length == 1) {
     likeText = "1 Like";
@@ -85,7 +88,6 @@ const PostCard = ({ item }) => {
         const user = JSON.parse(userData);
         setUserInfo(user);
       } else {
-        const usersRef = collection(db, "users");
         const q = query(usersRef, where("email", "==", auth.currentUser.email));
         const querySnapshot = await getDocs(q);
         querySnapshot.forEach((doc) => {
@@ -101,7 +103,6 @@ const PostCard = ({ item }) => {
 
   useEffect(() => {
     const getUser = async () => {
-      const usersRef = collection(db, "users");
       const q = query(usersRef, where("user_id", "==", item.user_id));
       const querySnapshot = await getDocs(q);
       querySnapshot.forEach((doc) => {
@@ -114,6 +115,7 @@ const PostCard = ({ item }) => {
       getUser();
     }
   }, [item.id]);
+
 
   const getImageUrlToShow = (image) => {
     const imageUrl = `https://firebasestorage.googleapis.com/v0/b/${storageBucket}/o/${encodeURIComponent(
@@ -138,32 +140,33 @@ const PostCard = ({ item }) => {
         setComments(tempPostData.comments);
         setLikes(tempPostData.likes);
       } catch (error) {
-        console.error("Error fetching post data: ", error);
+        console.error("Error fetching post data: " + error + " " + item.id);
       }
     };
     fetchPostData();
   }, [item.id]);
-  const updateLikeIcon= async (likes, user_id)=>{
+
+  const updateLikeIcon = async (likes, user_id) => {
     if (likes.includes(user_id) == true) {
       setLikeIcon("heart");
       setLikeIconColor("#510600");
     }
-    else{
+    else {
       setLikeIcon("heart-outlined");
       setLikeIconColor("#002D02");
     }
   }
 
   useEffect(() => {
-    if(likes.length>0){
+    if (likes.length > 0) {
       updateLikeIcon(likes, userInfo.user_id);
     }
-    else{
+    else {
       setLikeIcon("heart-outlined");
       setLikeIconColor("#002D02");
     }
   }, [likes]);
-  
+
 
   const removeLike = async () => {
     try {
@@ -200,11 +203,14 @@ const PostCard = ({ item }) => {
 
   const AddANewComment = async () => {
     const date = new Date();
+    const commentId = user_id + date.getTime();
+    console.log(commentId);
 
     const newCommentInfo = {
-      commentDescription: commentInput,
-      user_id: user_id,
-      timestamp: date,
+      "comment_id": commentId,
+      "commentDescription": commentInput,
+      "user_id": user_id,
+      "timestamp": date,
     };
     try {
       await updateDoc(doc(db, "posts", item.id), {
@@ -217,38 +223,56 @@ const PostCard = ({ item }) => {
     }
   };
 
-  const renderComment = async (comment) => {
-    const usersRef = collection(db, "users");
-    const q = query(usersRef, where("user_id", "==", comment.user_id));
-    const querySnapshot = await getDocs(q);
-    querySnapshot.forEach((doc) => {
-      const userData = doc.data();
-      setCommentatorImage(preFetchImage(userData.profile_url));
-      setCommentatorName(`${userData.firstName}${" "}${userData.lastName}`);
-    });
-
-    return (
-      <View>
-        {commentatorImage && (
-          <Image
-            style={styles.commentViewProfilePhoto}
-            source={{ uri: commentatorImage }}
-          />
-        )}
-        <View style={styles.singleCommentContainerWithoutProfile}>
-          {commentatorName && (
-            <Text style={styles.commentatorName}>{commentatorName}</Text>
-          )}
-          <Text style={styles.commentMessage}>
-            {comment.commentDescription}
-          </Text>
-          <Text style={styles.commentTime}>
-            {moment(comment.timestamp.toDate()).fromNow()}
-          </Text>
-        </View>
-      </View>
-    );
-  };
+  useEffect(() => {
+    const fetchCommentData = async ()=>{
+    
+      if(comments.length>0){
+        try{
+          
+            comments.map(async (comment, index)=>{
+              let tempComments = comments;
+              let tempUserData = await fetchCommentAuthor(comment.user_id)
+              if(Object.keys(tempUserData).length>0){
+                const tempComment = {
+                  "comment_id":comment.comment_id,
+                  "commentDescription":comment.commentDescription,
+                  "timestamp":comment.timestamp,
+                  "commentAuthor": tempUserData
+                }
+                tempComments[index] = tempComment
+                // console.log(tempComments)
+                setComments(tempComments)
+              }
+            })
+          }
+        catch(e){
+          console.log(e.error)
+        }
+      }
+        
+        // console.log(tempComments[0])
+    }
+    if(Object.keys(item).length>0) fetchCommentData()
+    
+  }, [])
+  const fetchCommentAuthor = async (user_id)=>{
+    try{
+      const q = query(usersRef, where("user_id", "==", user_id));
+      const querySnapshot = await getDocs(q);
+      let userDataTemp;
+      querySnapshot.forEach((doc) => {
+          userDataTemp = doc.data();
+      });
+      
+      // console.log(userDataTemp)
+      
+      return userDataTemp
+    }
+    catch(e){
+      console.log(e.error)
+    }
+    
+  }
 
   return (
     <View style={{ alignItems: "center" }}>
@@ -279,8 +303,7 @@ const PostCard = ({ item }) => {
             <InteractionText>{likeText}</InteractionText>
           </Interaction>
           <Interaction
-            onPress={() => {
-              setBottomSheetStatus(true);
+            onPress={() => {setBottomSheetStatus(true)
             }}
           >
             <FontAwesome name="commenting" size={24} color="#002D02" />
@@ -303,11 +326,20 @@ const PostCard = ({ item }) => {
                 <Text style={styles.commentViewHeadline}>Comments</Text>
               </ListItem.Content>
             </ListItem>
-            <ListItem>
-              <ListItem.Content>
-                {comments.map((comment) => renderComment(comment))}
-              </ListItem.Content>
-            </ListItem>
+            <FlatList
+              data={comments}
+              renderItem={({ item }) => <View style={styles.singleCommentContainerWithoutProfile}>
+                <Text style={styles.commentMessage}>
+                  {item.commentDescription} {"  " + item.commentAuthor.firstName}
+                </Text>
+                <Text style={styles.commentTime}>
+                  {moment(item.timestamp.toDate()).fromNow()}
+                </Text>
+              </View>}
+              keyExtractor={(item) => item.comment_id}
+              scrollEnabled={false}
+            />
+
             <ListItem>
               <ListItem.Content style={styles.addCommentContainer}>
                 <TextInput
@@ -326,6 +358,7 @@ const PostCard = ({ item }) => {
               </ListItem.Content>
             </ListItem>
           </BottomSheet>
+
         </InteractionWrapper>
       </Card>
     </View>

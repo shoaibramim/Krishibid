@@ -41,7 +41,6 @@ import {
   FlatList,
 } from "react-native";
 import { BottomSheet, ListItem } from "@rneui/base";
-import RenderComment from "./RenderComment";
 
 const storageBucket = process.env.EXPO_PUBLIC_storageBucket;
 
@@ -50,20 +49,14 @@ const PostCard = ({ item }) => {
   const [posterInfo, setPosterInfo] = useState({});
   const [profileImage, setProfileImage] = useState(null);
   const [bottomSheetStatus, setBottomSheetStatus] = useState(false);
-  const [liked, setLiked] = useState(false);
-  const [postData, setPostData] = useState(null);
+  const [postData, setPostData] = useState({});
   const [comments, setComments] = useState([]);
   const [commentInput, setCommentInput] = useState("");
   const [likes, setLikes] = useState([]);
-  const [commentatorImage, setCommentatorImage] = useState(null);
-  const [commentatorName, setCommentatorName] = useState("");
   const [likeIcon, setLikeIcon] = useState("heart-outlined");
   const [likeIconColor, setLikeIconColor] = useState("#002D02");
 
-  //likeIcon = liked ? "heart" : "heart-outlined";
-  // likeIconColor = liked ? "#510600" : "#002D02";
   const usersRef = collection(db, "users");
-
 
   if (likes.length == 1) {
     likeText = "1 Like";
@@ -99,7 +92,7 @@ const PostCard = ({ item }) => {
     getCurrentUser();
   }, []);
 
-  const { user_id } = userInfo;
+  const { user_id, username } = userInfo;
 
   useEffect(() => {
     const getUser = async () => {
@@ -115,7 +108,6 @@ const PostCard = ({ item }) => {
       getUser();
     }
   }, [item.id]);
-
 
   const getImageUrlToShow = (image) => {
     const imageUrl = `https://firebasestorage.googleapis.com/v0/b/${storageBucket}/o/${encodeURIComponent(
@@ -150,23 +142,20 @@ const PostCard = ({ item }) => {
     if (likes.includes(user_id) == true) {
       setLikeIcon("heart");
       setLikeIconColor("#510600");
-    }
-    else {
+    } else {
       setLikeIcon("heart-outlined");
       setLikeIconColor("#002D02");
     }
-  }
+  };
 
   useEffect(() => {
     if (likes.length > 0) {
       updateLikeIcon(likes, userInfo.user_id);
-    }
-    else {
+    } else {
       setLikeIcon("heart-outlined");
       setLikeIconColor("#002D02");
     }
   }, [likes]);
-
 
   const removeLike = async () => {
     try {
@@ -202,15 +191,14 @@ const PostCard = ({ item }) => {
   };
 
   const AddANewComment = async () => {
-    const date = new Date();
-    const commentId = user_id + date.getTime();
-    console.log(commentId);
+    const date = Timestamp.fromDate(new Date());
+    const commentId = user_id + date.toString();
 
     const newCommentInfo = {
-      "comment_id": commentId,
-      "commentDescription": commentInput,
-      "user_id": user_id,
-      "timestamp": date,
+      comment_id: commentId,
+      commentDescription: commentInput,
+      username: username,
+      timestamp: date,
     };
     try {
       await updateDoc(doc(db, "posts", item.id), {
@@ -222,57 +210,6 @@ const PostCard = ({ item }) => {
       console.error("Error adding comment:", error);
     }
   };
-
-  useEffect(() => {
-    const fetchCommentData = async ()=>{
-    
-      if(comments.length>0){
-        try{
-          
-            comments.map(async (comment, index)=>{
-              let tempComments = comments;
-              let tempUserData = await fetchCommentAuthor(comment.user_id)
-              if(Object.keys(tempUserData).length>0){
-                const tempComment = {
-                  "comment_id":comment.comment_id,
-                  "commentDescription":comment.commentDescription,
-                  "timestamp":comment.timestamp,
-                  "commentAuthor": tempUserData
-                }
-                tempComments[index] = tempComment
-                // console.log(tempComments)
-                setComments(tempComments)
-              }
-            })
-          }
-        catch(e){
-          console.log(e.error)
-        }
-      }
-        
-        // console.log(tempComments[0])
-    }
-    if(Object.keys(item).length>0) fetchCommentData()
-    
-  }, [])
-  const fetchCommentAuthor = async (user_id)=>{
-    try{
-      const q = query(usersRef, where("user_id", "==", user_id));
-      const querySnapshot = await getDocs(q);
-      let userDataTemp;
-      querySnapshot.forEach((doc) => {
-          userDataTemp = doc.data();
-      });
-      
-      // console.log(userDataTemp)
-      
-      return userDataTemp
-    }
-    catch(e){
-      console.log(e.error)
-    }
-    
-  }
 
   return (
     <View style={{ alignItems: "center" }}>
@@ -303,7 +240,8 @@ const PostCard = ({ item }) => {
             <InteractionText>{likeText}</InteractionText>
           </Interaction>
           <Interaction
-            onPress={() => {setBottomSheetStatus(true)
+            onPress={() => {
+              setBottomSheetStatus(true);
             }}
           >
             <FontAwesome name="commenting" size={24} color="#002D02" />
@@ -328,14 +266,17 @@ const PostCard = ({ item }) => {
             </ListItem>
             <FlatList
               data={comments}
-              renderItem={({ item }) => <View style={styles.singleCommentContainerWithoutProfile}>
-                <Text style={styles.commentMessage}>
-                  {item.commentDescription} {"  " + item.commentAuthor.firstName}
-                </Text>
-                <Text style={styles.commentTime}>
-                  {moment(item.timestamp.toDate()).fromNow()}
-                </Text>
-              </View>}
+              renderItem={({ item }) => (
+                <View style={styles.singleCommentContainerWithoutProfile}>
+                  <Text style={styles.commentatorName}>@{item.username}</Text>
+                  <Text style={styles.commentMessage}>
+                    {item.commentDescription}
+                  </Text>
+                  <Text style={styles.commentTime}>
+                    {moment(item.timestamp.toDate()).fromNow()}
+                  </Text>
+                </View>
+              )}
               keyExtractor={(item) => item.comment_id}
               scrollEnabled={false}
             />
@@ -352,13 +293,13 @@ const PostCard = ({ item }) => {
                 <TouchableOpacity
                   disabled={commentInput.trim().length == 0}
                   onPress={AddANewComment}
+                  style={commentInput.trim().length == 0 && { opacity: 0.5 }}
                 >
                   <Ionicons name="send" size={32} color="#002D02" />
                 </TouchableOpacity>
               </ListItem.Content>
             </ListItem>
           </BottomSheet>
-
         </InteractionWrapper>
       </Card>
     </View>
@@ -420,16 +361,19 @@ const styles = StyleSheet.create({
   singleCommentContainerWithoutProfile: {
     flexDirection: "column",
     backgroundColor: "#E6E6E6",
-    borderTopLeftRadius: 0,
+    borderTopLeftRadius: 10,
     borderTopRightRadius: 10,
     borderBottomLeftRadius: 10,
     borderBottomRightRadius: 10,
     padding: 5,
+    margin: 5,
+    marginHorizontal: 20,
   },
   commentatorName: {
     fontFamily: "DMBold",
     fontSize: 14,
     color: "#002D02",
+    marginBottom: 3,
   },
   commentMessage: {
     fontFamily: "DMRegular",
@@ -440,8 +384,8 @@ const styles = StyleSheet.create({
     fontFamily: "DMMedium",
     fontSize: 10,
     color: "#510600",
-    marginTop: 5,
-    marginLeft: 190,
+    marginTop: 10,
+    marginLeft: 10,
   },
   addCommentContainer: {
     flexDirection: "row",

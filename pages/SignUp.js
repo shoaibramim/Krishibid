@@ -10,7 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { FontAwesome, Entypo } from "@expo/vector-icons";
+import { FontAwesome, Ionicons } from "@expo/vector-icons";
 import { auth, db } from "../firebase";
 import {
   createUserWithEmailAndPassword,
@@ -47,6 +47,7 @@ export default function SignUp(props) {
   );
   const [birthDateModalStatus, setBirthDateModalStatus] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [hidePassword, setHidePassword] = useState(true);
 
   const viewRef = useRef(null);
 
@@ -101,8 +102,8 @@ export default function SignUp(props) {
         location: {
           country: "N/A",
           state: "N/A",
-          city: "N/A"
-        }
+          city: "N/A",
+        },
       });
 
       updateDoc(doc(db, "users", docRef.id), { user_id: docRef.id });
@@ -182,183 +183,217 @@ export default function SignUp(props) {
         >
           Create Account
         </Animated.Text>
-        <Animated.View
-          entering={FadeInDown.delay(200).duration(1000).springify()}
-          style={styles.flexRow}
-        >
-          <View style={[styles.textInputStyle, styles.textInputStyleWidth50]}>
-            <Text style={styles.textInputText}>First Name</Text>
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <Animated.View
+            entering={FadeInDown.delay(200).duration(1000).springify()}
+            style={styles.flexRow}
+          >
+            <View style={[styles.textInputStyle, styles.textInputStyleWidth50]}>
+              <Text style={styles.textInputText}>First Name</Text>
+              <TextInput
+                style={styles.textInputBox}
+                placeholder="Your first name"
+                onChangeText={(text) => {
+                  setFirstName(text.trim());
+                }}
+                value={firstName}
+              />
+            </View>
+            <View style={[styles.textInputStyle, styles.textInputStyleWidth50]}>
+              <Text style={styles.textInputText}>Last Name</Text>
+              <TextInput
+                style={styles.textInputBox}
+                placeholder="Your last name"
+                onChangeText={(text) => {
+                  setLastName(text.trim());
+                }}
+                value={lastName}
+              />
+            </View>
+          </Animated.View>
+          <Animated.View
+            entering={FadeInUp.delay(300).duration(1000).springify()}
+            style={styles.textInputStyle}
+          >
+            <Text style={styles.textInputText}>Username</Text>
             <TextInput
               style={styles.textInputBox}
-              placeholder="Peter"
+              placeholder="your_username"
+              autoCapitalize="none"
               onChangeText={(text) => {
-                setFirstName(text.trim());
+                setUsername(text.trim());
               }}
-              value={firstName}
+              value={username}
             />
-          </View>
-          <View style={[styles.textInputStyle, styles.textInputStyleWidth50]}>
-            <Text style={styles.textInputText}>Last Name</Text>
-            <TextInput
-              style={styles.textInputBox}
-              placeholder="Parker"
-              onChangeText={(text) => {
-                setLastName(text.trim());
+          </Animated.View>
+          {usernameError[0].length > 0 && username.length > 0 && (
+            <Text
+              style={{
+                color: usernameError[1],
+                paddingLeft: 20,
+                fontSize: 13,
+                fontFamily: "DMMedium",
               }}
-              value={lastName}
-            />
-          </View>
-        </Animated.View>
-        <Animated.View
-          entering={FadeInUp.delay(300).duration(1000).springify()}
-          style={styles.textInputStyle}
-        >
-          <Text style={styles.textInputText}>Username</Text>
-          <TextInput
-            style={styles.textInputBox}
-            placeholder="spider_man"
-            autoCapitalize="none"
-            onChangeText={(text) => {
-              setUsername(text.trim());
-            }}
-            value={username}
-          />
-        </Animated.View>
-        {usernameError[0].length > 0 && username.length > 0 && (
-          <Text
-            style={{
-              color: usernameError[1],
-              paddingLeft: 20,
-              fontSize: 13,
-              fontFamily: "DMMedium",
-            }}
-          >
-            {usernameError[0]}
-          </Text>
-        )}
-        <Animated.View
-          entering={FadeInDown.delay(400).duration(1000).springify()}
-          style={styles.textInputStyle}
-        >
-          <Text style={styles.textInputText}>E-mail</Text>
-          <TextInput
-            style={styles.textInputBox}
-            placeholder="your_email@xyz.com"
-            autoCapitalize="none"
-            onChangeText={(text) => {
-              setEmail(text);
-              setError("");
-            }}
-            value={email}
-          />
-        </Animated.View>
-        <Animated.View
-          entering={FadeInUp.delay(500).duration(1000).springify()}
-          style={styles.textInputStyle}
-        >
-          <Text style={styles.textInputText}>Date of Birth</Text>
-          <TouchableOpacity
-            style={styles.textInputBox}
-            onPress={() => setBirthDateModalStatus(true)}
-          >
-            <Text style={styles.birthDate}>
-              <FontAwesome name="birthday-cake" size={20} color="#002D02" />
-              &nbsp; &nbsp;
-              {birthDate}
+            >
+              {usernameError[0]}
             </Text>
-          </TouchableOpacity>
-          {birthDateModalStatus && (
-            <DateTimePicker
-              testID="dateTimePicker"
-              value={moment(birthDate, "DD/MM/YYYY").toDate()}
-              mode="date"
-              onChange={(e, date) => {
-                const day = date.getDate();
-                const month = date.getMonth();
-                const year = date.getFullYear();
-
-                const formattedDate = `${day.toString().padStart(2, "0")}-${(
-                  month + 1
-                )
-                  .toString()
-                  .padStart(2, "0")}-${year.toString()}`;
-
-                setBirthDate(formattedDate);
-                setBirthDateModalStatus(false);
-              }}
-            />
           )}
-        </Animated.View>
-
-        <Animated.View
-          entering={FadeInDown.delay(500).duration(1000).springify()}
-          style={styles.textInputStyle}
-        >
-          <Text style={styles.textInputText}>Password</Text>
-          <TextInput
-            style={styles.textInputBox}
-            placeholder="yourpassword"
-            autoCapitalize="none"
-            secureTextEntry
-            onChangeText={(text) => {
-              setPassword(text);
-              setError("");
-            }}
-            value={password}
-          />
-        </Animated.View>
-        <Animated.View
-          entering={FadeInUp.delay(400).duration(1000).springify()}
-          style={styles.textInputStyle}
-        >
-          <Text style={styles.textInputText}>Confirm Password</Text>
-          <TextInput
-            style={styles.textInputBox}
-            placeholder="yourpassword"
-            autoCapitalize="none"
-            secureTextEntry
-            onChangeText={(text) => {
-              setConfirmPassword(text);
-              setError("");
-            }}
-            value={confirmPassword}
-          />
-        </Animated.View>
-        {error.length > 0 && (
-          <Text
-            style={{
-              fontFamily: "DMMedium",
-              color: "#510600",
-              textAlign: "center",
-            }}
+          <Animated.View
+            entering={FadeInDown.delay(400).duration(1000).springify()}
+            style={styles.textInputStyle}
           >
-            {error}
-          </Text>
-        )}
-        <Animated.View
-          entering={FadeInDown.delay(300).duration(1000).springify()}
-        >
-          {loading ? (<ActivityIndicator size={22} color={"#002D02"} />) : (
-            <TouchableOpacity style={styles.buttonFlexBox} onPress={handleSingUp} disabled={password.length < 1 || email.length < 1 || (password !== confirmPassword)}>
-              <FontAwesome name="user" size={24} color="#ffffff" />
-              <Text style={styles.buttonText}>Sign Up
+            <Text style={styles.textInputText}>E-mail</Text>
+            <TextInput
+              style={styles.textInputBox}
+              placeholder="your_email@xyz.com"
+              autoCapitalize="none"
+              onChangeText={(text) => {
+                setEmail(text);
+                setError("");
+              }}
+              value={email}
+            />
+          </Animated.View>
+          <Animated.View
+            entering={FadeInUp.delay(500).duration(1000).springify()}
+            style={styles.textInputStyle}
+          >
+            <Text style={styles.textInputText}>Date of Birth</Text>
+            <TouchableOpacity
+              style={styles.textInputBox}
+              onPress={() => setBirthDateModalStatus(true)}
+            >
+              <Text style={styles.birthDate}>
+                <FontAwesome name="birthday-cake" size={20} color="#002D02" />
+                &nbsp; &nbsp;
+                {birthDate}
               </Text>
             </TouchableOpacity>
-          )}
+            {birthDateModalStatus && (
+              <DateTimePicker
+                testID="dateTimePicker"
+                value={moment(birthDate, "DD/MM/YYYY").toDate()}
+                mode="date"
+                onChange={(e, date) => {
+                  const day = date.getDate();
+                  const month = date.getMonth();
+                  const year = date.getFullYear();
 
-        </Animated.View>
+                  const formattedDate = `${day.toString().padStart(2, "0")}-${(
+                    month + 1
+                  )
+                    .toString()
+                    .padStart(2, "0")}-${year.toString()}`;
 
-        <Animated.View
-          entering={FadeInUp.delay(200).duration(1000).springify()}
-          style={styles.footerStyle}
-        >
-          <Text style={styles.textInputText}>
-            Already have an account?
-            <Text style={styles.footerLink} onPress={goToLogIn}>
-              &nbsp; Sign In
+                  setBirthDate(formattedDate);
+                  setBirthDateModalStatus(false);
+                }}
+              />
+            )}
+          </Animated.View>
+
+          <Animated.View
+            entering={FadeInDown.delay(500).duration(1000).springify()}
+            style={styles.textInputStyle}
+          >
+            <Text style={styles.textInputText}>Password</Text>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <TextInput
+                style={styles.passwordTextInputBox}
+                placeholder="yourPassword"
+                autoCapitalize="none"
+                secureTextEntry={hidePassword}
+                onChangeText={(text) => {
+                  setPassword(text);
+                  setError("");
+                }}
+                value={password}
+              />
+              <TouchableOpacity
+                onPress={() => setHidePassword(!hidePassword)}
+                style={styles.hidePasswordIcon}
+              >
+                <Ionicons
+                  name={hidePassword ? "eye" : "eye-off"}
+                  size={22}
+                  color="#510600"
+                />
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
+          <Animated.View
+            entering={FadeInUp.delay(400).duration(1000).springify()}
+            style={styles.textInputStyle}
+          >
+            <Text style={styles.textInputText}>Confirm Password</Text>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <TextInput
+                style={styles.passwordTextInputBox}
+                placeholder="yourPassword"
+                autoCapitalize="none"
+                secureTextEntry={hidePassword}
+                onChangeText={(text) => {
+                  setConfirmPassword(text);
+                  setError("");
+                }}
+                value={confirmPassword}
+              />
+              <TouchableOpacity
+                onPress={() => setHidePassword(!hidePassword)}
+                style={styles.hidePasswordIcon}
+              >
+                <Ionicons
+                  name={hidePassword ? "eye" : "eye-off"}
+                  size={22}
+                  color="#510600"
+                />
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
+          {error.length > 0 && (
+            <Text
+              style={{
+                fontFamily: "DMMedium",
+                color: "#510600",
+                textAlign: "center",
+              }}
+            >
+              {error}
             </Text>
-          </Text>
-        </Animated.View>
+          )}
+          <Animated.View
+            entering={FadeInDown.delay(300).duration(1000).springify()}
+          >
+            {loading ? (
+              <ActivityIndicator size={22} color={"#002D02"} />
+            ) : (
+              <TouchableOpacity
+                style={styles.buttonFlexBox}
+                onPress={handleSingUp}
+                disabled={
+                  password.length < 1 ||
+                  email.length < 1 ||
+                  password !== confirmPassword
+                }
+              >
+                <FontAwesome name="user" size={24} color="#ffffff" />
+                <Text style={styles.buttonText}>Sign Up</Text>
+              </TouchableOpacity>
+            )}
+          </Animated.View>
+
+          <Animated.View
+            entering={FadeInUp.delay(200).duration(1000).springify()}
+            style={styles.footerStyle}
+          >
+            <Text style={styles.textInputText}>
+              Already have an account?
+              <Text style={styles.footerLink} onPress={goToLogIn}>
+                &nbsp; Sign In
+              </Text>
+            </Text>
+          </Animated.View>
+        </ScrollView>
       </Animated.View>
     </View>
   );
@@ -498,5 +533,21 @@ const styles = StyleSheet.create({
     flexDirection: "column",
     justifyContent: "center",
     alignItems: "center",
+  },
+  passwordTextInputBox: {
+    fontFamily: "DMRegular",
+    height: 40,
+    width: "94%",
+    borderRadius: 12,
+    overflow: "hidden",
+    backgroundColor: "#D8EBD9",
+    color: "#002D02",
+    marginTop: 5,
+    marginBottom: 5,
+    marginHorizontal: 10,
+    paddingLeft: 10,
+  },
+  hidePasswordIcon: {
+    marginLeft: -50,
   },
 });

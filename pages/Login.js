@@ -10,13 +10,13 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { FontAwesome, Entypo } from "@expo/vector-icons";
+import { FontAwesome, Ionicons } from "@expo/vector-icons";
 import Animated, { FadeInUp, FadeInDown } from "react-native-reanimated";
 import { auth, db } from "../firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Checkbox } from 'react-native-paper';
+import { collection, query, where, getDocs } from "firebase/firestore";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Checkbox } from "react-native-paper";
 
 export default function Login(props) {
   const { navigation, route } = props;
@@ -27,6 +27,7 @@ export default function Login(props) {
   const [error, setError] = useState("");
   const [loading, setloading] = useState(false);
   const [isRememberMeChecked, setIsRememberMeChecked] = useState(false);
+  const [hidePassword, setHidePassword] = useState(true);
 
   const loginUser = async () => {
     try {
@@ -52,21 +53,21 @@ export default function Login(props) {
             location: {
               country: userData.location.country,
               state: userData.location.state,
-              city: userData.location.city
-            }
+              city: userData.location.city,
+            },
           };
           if (isRememberMeChecked) {
             const loggedUserInfoString = JSON.stringify(loggedUserInfo);
-            AsyncStorage.setItem('userData', loggedUserInfoString)
+            AsyncStorage.setItem("userData", loggedUserInfoString)
               .then(() => {
-                console.log('Data stored successfully!')
+                console.log("Data stored successfully!");
               })
               .catch((error) => {
-                console.log('Failed to store data locally: ', error);
+                console.log("Failed to store data locally: ", error);
               });
           }
-          setEmail('');
-          setPassword('');
+          setEmail("");
+          setPassword("");
         });
         navigation.popToTop();
         navigation.replace("BottomTabs");
@@ -110,99 +111,124 @@ export default function Login(props) {
         >
           Welcome
         </Animated.Text>
-        <View style={styles.textInputStyle}>
-          <Animated.Text
-            entering={FadeInUp.delay(200).duration(1000).springify()}
-            style={styles.textInputText}
-          >
-            E-mail
-          </Animated.Text>
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <View style={styles.textInputStyle}>
+            <Animated.Text
+              entering={FadeInUp.delay(200).duration(1000).springify()}
+              style={styles.textInputText}
+            >
+              E-mail
+            </Animated.Text>
+            <Animated.View
+              entering={FadeInDown.delay(500).duration(1000).springify()}
+            >
+              <TextInput
+                style={styles.textInputBox}
+                placeholder="your_email@xyz.com"
+                autoCapitalize="none"
+                onChangeText={(text) => {
+                  setEmail(text);
+                  setError("");
+                }}
+                value={email}
+              />
+            </Animated.View>
+          </View>
+          <View style={styles.textInputStyle}>
+            <Animated.Text
+              entering={FadeInUp.delay(300).duration(1000).springify()}
+              style={styles.textInputText}
+            >
+              Password
+            </Animated.Text>
+            <Animated.View
+              entering={FadeInDown.delay(500).duration(1000).springify()}
+              style={{ flexDirection: "row", alignItems: "center" }}
+            >
+              <TextInput
+                style={styles.textInputBox}
+                placeholder="yourPassword"
+                autoCapitalize="none"
+                secureTextEntry={hidePassword}
+                onChangeText={(text) => {
+                  setPassword(text);
+                  setError("");
+                }}
+                value={password}
+              />
+              <TouchableOpacity
+                onPress={() => setHidePassword(!hidePassword)}
+                style={styles.hidePasswordIcon}
+              >
+                <Ionicons
+                  name={hidePassword ? "eye" : "eye-off"}
+                  size={22}
+                  color="#510600"
+                />
+              </TouchableOpacity>
+            </Animated.View>
+          </View>
           <Animated.View
-            entering={FadeInDown.delay(500).duration(1000).springify()}
+            entering={FadeInDown.delay(400).duration(1000).springify()}
+            style={styles.checkboxContainer}
           >
-            <TextInput
-              style={styles.textInputBox}
-              placeholder="your_email@xyz.com"
-              autoCapitalize="none"
-              onChangeText={(text) => {
-                setEmail(text);
-                setError("");
+            <Checkbox
+              style={styles.checkbox}
+              status={isRememberMeChecked ? "checked" : "unchecked"}
+              onPress={() => {
+                setIsRememberMeChecked(!isRememberMeChecked);
               }}
-              value={email}
+              color={isRememberMeChecked ? "#002D02" : undefined}
             />
-          </Animated.View>
-        </View>
-        <View style={styles.textInputStyle}>
-          <Animated.Text
-            entering={FadeInUp.delay(300).duration(1000).springify()}
-            style={styles.textInputText}
-          >
-            Password
-          </Animated.Text>
-          <Animated.View
-            entering={FadeInDown.delay(500).duration(1000).springify()}
-          >
-            <TextInput
-              style={styles.textInputBox}
-              placeholder="yourpassword"
-              autoCapitalize="none"
-              secureTextEntry
-              onChangeText={(text) => {
-                setPassword(text);
-                setError("");
+            <Text
+              onPress={() => {
+                setIsRememberMeChecked(!isRememberMeChecked);
               }}
-              value={password}
-            />
-          </Animated.View>
-        </View>
-        <Animated.View
-          entering={FadeInDown.delay(400).duration(1000).springify()}
-          style={styles.checkboxContainer}
-        >
-          <Checkbox
-            style={styles.checkbox}
-            status={isRememberMeChecked ? 'checked' : 'unchecked'}
-            onPress={() => { setIsRememberMeChecked(!isRememberMeChecked); }}
-            color={isRememberMeChecked ? "#002D02" : undefined}
-          />
-          <Text onPress={() => { setIsRememberMeChecked(!isRememberMeChecked); }} style={styles.checkboxLabel}>Keep Me Logged In</Text>
-        </Animated.View>
-        {error.length > 0 && (
-          <Text
-            style={{
-              fontFamily: "DMMedium",
-              color: "#510600",
-              textAlign: "center",
-            }}
-          >
-            {error}
-          </Text>
-        )}
-        <Animated.View
-          entering={FadeInDown.delay(300).duration(1000).springify()}
-        >
-          {loading ? (<ActivityIndicator size={22} color={"#002D02"} />) : (
-            <TouchableOpacity style={styles.buttonFlexBox} onPress={handleLogin} disabled={password.length < 1 || email.length < 1}>
-              <FontAwesome name="user" size={24} color="#ffffff" />
-              <Text style={styles.buttonText}>
-                Log in
-              </Text>
-            </TouchableOpacity>
-          )}
-
-        </Animated.View>
-
-        <Animated.View
-          entering={FadeInUp.delay(400).duration(1000).springify()}
-          style={styles.footerStyle}
-        >
-          <Text style={styles.textInputText}>
-            Don't have an account?
-            <Text style={styles.footerLink} onPress={goToSignUp}>
-              &nbsp; Sign up
+              style={styles.checkboxLabel}
+            >
+              Keep Me Logged In
             </Text>
-          </Text>
-        </Animated.View>
+          </Animated.View>
+          {error.length > 0 && (
+            <Text
+              style={{
+                fontFamily: "DMMedium",
+                color: "#510600",
+                textAlign: "center",
+              }}
+            >
+              {error}
+            </Text>
+          )}
+          <Animated.View
+            entering={FadeInDown.delay(300).duration(1000).springify()}
+          >
+            {loading ? (
+              <ActivityIndicator size={22} color={"#002D02"} />
+            ) : (
+              <TouchableOpacity
+                style={styles.buttonFlexBox}
+                onPress={handleLogin}
+                disabled={password.length < 1 || email.length < 1}
+              >
+                <FontAwesome name="user" size={24} color="#ffffff" />
+                <Text style={styles.buttonText}>Log in</Text>
+              </TouchableOpacity>
+            )}
+          </Animated.View>
+
+          <Animated.View
+            entering={FadeInUp.delay(400).duration(1000).springify()}
+            style={styles.footerStyle}
+          >
+            <Text style={styles.textInputText}>
+              Don't have an account?
+              <Text style={styles.footerLink} onPress={goToSignUp}>
+                &nbsp; Sign up
+              </Text>
+            </Text>
+          </Animated.View>
+        </ScrollView>
       </Animated.View>
     </View>
   );
@@ -264,6 +290,7 @@ const styles = StyleSheet.create({
   textInputBox: {
     fontFamily: "DMRegular",
     height: 45,
+    width: "95%",
     borderRadius: 12,
     overflow: "hidden",
     backgroundColor: "#D8EBD9",
@@ -319,20 +346,23 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   checkboxContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginHorizontal: 10,
     paddingLeft: 20,
-    width: 'auto',
+    width: "auto",
     alignContent: "center",
     alignItems: "center",
   },
   checkbox: {
-    alignSelf: 'center',
+    alignSelf: "center",
     color: "#002D02",
   },
   checkboxLabel: {
     fontFamily: "DMMedium",
     color: "#002D02",
     fontSize: 16,
+  },
+  hidePasswordIcon: {
+    marginLeft: -50,
   },
 });

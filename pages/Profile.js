@@ -81,7 +81,7 @@ export default function Profile(props) {
       }
     };
     getUser();
-  }, []);
+  }, [isFocused]);
 
   const updateOnFirebase = async (fileName, image, userId) => {
     try {
@@ -503,7 +503,7 @@ export default function Profile(props) {
             <MaterialIcons name="location-pin" size={20} color="#002D02" />
             <Text style={styles.detailTextStyle}>
               {Object.keys(userInfo).length > 0
-                ? userInfo.location.city + ", " + userInfo.location.state
+                ? userInfo.location.state + ", " + userInfo.location.country
                 : ""}
             </Text>
           </View>

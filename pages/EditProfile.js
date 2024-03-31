@@ -29,6 +29,7 @@ import * as ImagePicker from "expo-image-picker";
 import { BottomSheet, ListItem } from "@rneui/base";
 import { Dropdown } from "react-native-element-dropdown";
 import axios from "axios";
+import { useIsFocused } from "@react-navigation/native";
 
 const BASE_URL = process.env.EXPO_PUBLIC_BASE_URL;
 const API_KEY = process.env.EXPO_PUBLIC_API_KEY;
@@ -47,9 +48,8 @@ export default function EditProfile(props) {
   const [loading, setLoading] = useState(false);
   const [bottomSheetStatus, setBottomSheetStatus] = useState(false);
   const [imageUri, setImageUri] = useState(null);
-  const [newImageUri, setnewImageUri] = useState(null);
+  const [imageChanged, setImageChanged] = useState(false);
   const [userInfo, setUserInfo] = useState({});
-  const [fileName, setFileName] = useState(null);
   const [eduInstitute, setEduInstitute] = useState("");
 
   const [countryData, setCountryData] = useState([]);
@@ -58,10 +58,14 @@ export default function EditProfile(props) {
   const [country, setCountry] = useState(null);
   const [state, setState] = useState(null);
   const [city, setCity] = useState(null);
-  const [countryName, setCountryName] = useState(null);
-  const [stateName, setStateName] = useState(null);
-  const [cityName, setCityName] = useState(null);
+  const [countryName, setCountryName] = useState("");
+  const [stateName, setStateName] = useState("");
+  const [cityName, setCityName] = useState("");
   const [isFocus, setIsFocus] = useState(false);
+
+  const usersRef = collection(db, "users");
+
+  const isFocused = useIsFocused();
 
   useEffect(() => {
     const getUser = async () => {
@@ -69,20 +73,75 @@ export default function EditProfile(props) {
       if (userData) {
         const user = JSON.parse(userData);
         setUserInfo(user);
+        setFirstName(user.firstName);
+        setLastName(user.lastName);
+        setEduInstitute(user.educationalInstitute);
+        setCountryName(user.location.country);
+        setStateName(user.location.state);
+        setCityName(user.location.city);
         setBirthDate(user.dob);
       } else {
-        const usersRef = collection(db, "users");
         const q = query(usersRef, where("email", "==", auth.currentUser.email));
         const querySnapshot = await getDocs(q);
         querySnapshot.forEach((doc) => {
           const userData = doc.data();
           setUserInfo(userData);
+          setFirstName(userData.firstName);
+          setLastName(userData.lastName);
+          setEduInstitute(userData.educationalInstitute);
+          setCountryName(userData.location.country);
+          setStateName(userData.location.state);
+          setCityName(userData.location.city);
           setBirthDate(userData.dob);
         });
       }
     };
     getUser();
-  }, []);
+  }, [isFocused]);
+
+  const updateOnFirebase = async (fileName, image, userId) => {
+    try {
+      const response = await fetch(
+        "https://firebasestorage.googleapis.com/v0/b/" +
+          storageBucket +
+          "/o?name=" +
+          fileName,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "image/jpeg" || "image/png" || "image/jpg",
+          },
+          body: await fetch(image).then((response) => response.blob()),
+        }
+      );
+      if (response.ok) {
+        try {
+          await updateDoc(doc(db, "users", userId), { profile_url: fileName });
+          updateAsyncData(fileName);
+        } catch (error) {
+          console.error(error);
+          Alert.alert("Failed to upload photo.");
+        }
+        Alert.alert("Profile Picture Updated");
+      } else {
+        Alert.alert("Failed to upload photo.");
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const updateAsyncData = async (profile_url) => {
+    let temp = userInfo;
+    temp.profile_url = profile_url;
+    AsyncStorage.setItem("userData", JSON.stringify(temp))
+      .then(() => {
+        console.log("Data stored successfully!");
+      })
+      .catch((error) => {
+        console.log("Failed to store data locally: ", error);
+      });
+  };
 
   const getImageUrlToShow = (image) => {
     const imageUrl = `https://firebasestorage.googleapis.com/v0/b/${storageBucket}/o/${encodeURIComponent(
@@ -95,7 +154,6 @@ export default function EditProfile(props) {
   const preFetchDP = (userProfilePic) => {
     const imageRef = getImageUrlToShow(userProfilePic);
     setImageUri(imageRef);
-    setnewImageUri(imageRef);
   };
 
   useEffect(() => {
@@ -119,6 +177,7 @@ export default function EditProfile(props) {
 
       if (!result.canceled) {
         setImageUri(result.assets[0].uri);
+        setImageChanged(true);
         setBottomSheetStatus(false);
       }
     } else {
@@ -137,6 +196,7 @@ export default function EditProfile(props) {
 
       if (!result.canceled) {
         setImageUri(result.assets[0].uri);
+        setImageChanged(true);
         setBottomSheetStatus(false);
       }
     } catch (error) {
@@ -227,16 +287,56 @@ export default function EditProfile(props) {
 
   const handleSubmit = async () => {
     try {
+      setLoading(true);
+      if (imageChanged) {
+        const timestamp = new Date().getTime();
+        const fileName = `images/ProfilePhotos/${userInfo.user_id}_${timestamp}.jpg`;
+        await updateOnFirebase(fileName, imageUri, userInfo.user_id);
+      }
+      const updatedData = {
+        firstName: firstName,
+        lastName: lastName,
+        educationalInstitute: eduInstitute,
+        location: {
+          country: countryName,
+          state: stateName,
+          city: cityName,
+        },
+        dob: birthDate,
+      };
+      await updateDoc(doc(db, "users", userInfo.user_id), updatedData);
+      let temp = userInfo;
+      temp.firstName = firstName;
+      temp.lastName = lastName;
+      temp.educationalInstitute = eduInstitute;
+      temp.location.country = countryName;
+      temp.location.state = stateName;
+      temp.location.city = cityName;
+      temp.dob = birthDate;
+      AsyncStorage.setItem("userData", JSON.stringify(temp))
+        .then(() => {
+          console.log("Data stored successfully!");
+        })
+        .catch((error) => {
+          console.log("Failed to store data locally: ", error);
+        });
+
+      setLoading(false);
+      navigation.replace("Profile");
     } catch (error) {
       console.error(error);
       Alert.alert("Failed to update data.");
+      setLoading(false);
     }
   };
 
   return (
     <View style={styles.container} onLayout={onLayoutRootView}>
       <Text style={styles.textStyle}>Edit Profile</Text>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{alignItems: "center", }}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ alignItems: "center" }}
+      >
         <TouchableOpacity
           style={{ marginBottom: 10 }}
           onPress={() => {
@@ -297,13 +397,25 @@ export default function EditProfile(props) {
         <View style={styles.flexRow}>
           <View style={[styles.textInputStyle, styles.textInputStyleWidth50]}>
             <Text style={styles.textInputText}>First Name</Text>
-            <TextInput style={[styles.textInputFlexBoxHalf, {marginLeft: 16}]} placeholder="">
+            <TextInput
+              style={[styles.textInputFlexBoxHalf, { marginLeft: 16 }]}
+              placeholder=""
+              onChangeText={(text) => {
+                setFirstName(text.trim());
+              }}
+            >
               {Object.keys(userInfo).length > 0 ? userInfo.firstName : ""}
             </TextInput>
           </View>
           <View style={[styles.textInputStyle, styles.textInputStyleWidth50]}>
             <Text style={styles.textInputText}>Last Name</Text>
-            <TextInput style={[styles.textInputFlexBoxHalf, {marginRight: 16}]} placeholder="">
+            <TextInput
+              style={[styles.textInputFlexBoxHalf, { marginRight: 16 }]}
+              placeholder=""
+              onChangeText={(text) => {
+                setLastName(text.trim());
+              }}
+            >
               {Object.keys(userInfo).length > 0 ? userInfo.lastName : ""}
             </TextInput>
           </View>
@@ -321,7 +433,13 @@ export default function EditProfile(props) {
         </View>
         <View style={styles.textInputStyle}>
           <Text style={styles.textInputText}>Educational Institute</Text>
-          <TextInput style={styles.textInputBox} placeholder="">
+          <TextInput
+            style={styles.textInputBox}
+            placeholder=""
+            onChangeText={(text) => {
+              setEduInstitute(text.trim());
+            }}
+          >
             {Object.keys(userInfo).length > 0
               ? userInfo.educationalInstitute
               : ""}
@@ -360,7 +478,7 @@ export default function EditProfile(props) {
         <View style={styles.flexRow}>
           <View style={[styles.textInputStyle, styles.textInputStyleWidth50]}>
             <Dropdown
-              style={[styles.textInputFlexBoxHalf, {marginLeft: 16}]}
+              style={[styles.textInputFlexBoxHalf, { marginLeft: 16 }]}
               placeholderStyle={styles.placeholderStyle}
               selectedTextStyle={styles.selectedTextStyle}
               inputSearchStyle={styles.inputSearchStyle}
@@ -389,7 +507,7 @@ export default function EditProfile(props) {
           </View>
           <View style={[styles.textInputStyle, styles.textInputStyleWidth50]}>
             <Dropdown
-              style={[styles.textInputFlexBoxHalf, {marginRight: 16}]}
+              style={[styles.textInputFlexBoxHalf, { marginRight: 16 }]}
               placeholderStyle={styles.placeholderStyle}
               selectedTextStyle={styles.selectedTextStyle}
               inputSearchStyle={styles.inputSearchStyle}

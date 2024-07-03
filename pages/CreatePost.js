@@ -124,6 +124,7 @@ export default function CreatePost(props) {
           postImg: fileName,
           postedTime: new Date(),
           likes: [],
+          dislikes: [],
           comments: [],
         });
         updateDoc(doc(db, "posts", docRef.id), { post_id: docRef.id });

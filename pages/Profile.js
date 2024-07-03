@@ -256,6 +256,7 @@ export default function Profile(props) {
             postImg,
             postedTime,
             likes,
+            dislikes,
             comments,
           } = doc.data();
           list.push({
@@ -265,6 +266,7 @@ export default function Profile(props) {
             postImg,
             postedTime,
             likes,
+            dislikes,
             comments,
           });
         });
@@ -305,6 +307,7 @@ export default function Profile(props) {
             postImg,
             postedTime,
             likes,
+            dislikes,
             comments,
           } = doc.data();
           list.push({
@@ -314,6 +317,7 @@ export default function Profile(props) {
             postImg,
             postedTime,
             likes,
+            dislikes,
             comments,
           });
         });
@@ -356,6 +360,7 @@ export default function Profile(props) {
             postImg,
             postedTime,
             likes,
+            dislikes,
             comments,
           } = doc.data();
           list.push({
@@ -365,6 +370,7 @@ export default function Profile(props) {
             postImg,
             postedTime,
             likes,
+            dislikes,
             comments,
           });
         });

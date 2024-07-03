@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { FontAwesome, Entypo, Ionicons } from "@expo/vector-icons";
+import { FontAwesome, Entypo, Ionicons, AntDesign } from "@expo/vector-icons";
 import {
   Container,
   Card,
@@ -53,26 +53,13 @@ const PostCard = ({ item }) => {
   const [comments, setComments] = useState([]);
   const [commentInput, setCommentInput] = useState("");
   const [likes, setLikes] = useState([]);
-  const [likeIcon, setLikeIcon] = useState("heart-outlined");
+  const [dislikes, setDislikes] = useState([]);
+  const [likeIcon, setLikeIcon] = useState("like2");
+  const [dislikeIcon, setDislikeIcon] = useState("dislike2");
   const [likeIconColor, setLikeIconColor] = useState("#002D02");
+  const [dislikeIconColor, setDislikeIconColor] = useState("#002D02");
 
   const usersRef = collection(db, "users");
-
-  if (likes.length == 1) {
-    likeText = "1 Like";
-  } else if (likes.length > 1) {
-    likeText = likes.length + " Likes";
-  } else {
-    likeText = "Like";
-  }
-
-  if (comments.length == 1) {
-    commentText = "1 Comment";
-  } else if (comments.length > 1) {
-    commentText = comments.length + " Comments";
-  } else {
-    commentText = "Comment";
-  }
 
   useEffect(() => {
     const getCurrentUser = async () => {
@@ -131,6 +118,7 @@ const PostCard = ({ item }) => {
         setPostData(tempPostData);
         setComments(tempPostData.comments);
         setLikes(tempPostData.likes);
+        setDislikes(tempPostData.dislikes);
       } catch (error) {
         console.error("Error fetching post data: " + error + " " + item.id);
       }
@@ -140,11 +128,20 @@ const PostCard = ({ item }) => {
 
   const updateLikeIcon = async (likes, user_id) => {
     if (likes.includes(user_id) == true) {
-      setLikeIcon("heart");
-      setLikeIconColor("#510600");
-    } else {
-      setLikeIcon("heart-outlined");
+      setLikeIcon("like1");
       setLikeIconColor("#002D02");
+    } else {
+      setLikeIcon("like2");
+      setLikeIconColor("#002D02");
+    }
+  };
+  const updateDislikeIcon = async (dislikes, user_id) => {
+    if (dislikes.includes(user_id) == true) {
+      setDislikeIcon("dislike1");
+      setDislikeIconColor("#510600");
+    } else {
+      setDislikeIcon("dislike2");
+      setDislikeIconColor("#002D02");
     }
   };
 
@@ -152,10 +149,18 @@ const PostCard = ({ item }) => {
     if (likes.length > 0) {
       updateLikeIcon(likes, userInfo.user_id);
     } else {
-      setLikeIcon("heart-outlined");
+      setLikeIcon("like2");
       setLikeIconColor("#002D02");
     }
   }, [likes]);
+  useEffect(() => {
+    if (dislikes.length > 0) {
+      updateDislikeIcon(dislikes, userInfo.user_id);
+    } else {
+      setDislikeIcon("dislike2");
+      setDislikeIconColor("#002D02");
+    }
+  }, [dislikes]);
 
   const removeLike = async () => {
     try {
@@ -180,6 +185,31 @@ const PostCard = ({ item }) => {
     }
   };
 
+  const removeDislike = async()=>{
+    try {
+      await updateDoc(doc(db, "posts", item.id), {
+        dislikes: arrayRemove(user_id),
+      });
+      const tempDislikes = dislikes.filter(item=>item!= user_id)
+      setDislikes(tempDislikes);
+      
+    } catch (error) {
+      console.error('Error removing dislikes:', error);
+    }
+  }
+
+  const addDislike =  async()=>{
+    try {
+      await updateDoc(doc(db, "posts", item.id), {
+        dislikes: arrayUnion(user_id),
+      })
+      setDislikes([...dislikes, user_id]);
+    } 
+    catch (error) {
+      console.error('Error adding dislikes:', error);
+    }
+  }
+
   const newLikeOrRemoveLike = () => {
     if (likes.includes(user_id) == true) {
       ///Remove the Like
@@ -187,8 +217,19 @@ const PostCard = ({ item }) => {
     } else {
       ///new Like + remove dislike
       addLike();
+      removeDislike();
     }
   };
+
+  const newDislikeOrRemoveDislike = ()=>{
+    if(dislikes.includes(user_id)==true){
+      removeDislike();
+    }
+    else{
+      addDislike();
+      removeLike();
+    }
+  }
 
   const AddANewComment = async () => {
     const date = Timestamp.fromDate(new Date());
@@ -236,8 +277,12 @@ const PostCard = ({ item }) => {
 
         <InteractionWrapper>
           <Interaction onPress={newLikeOrRemoveLike}>
-            <Entypo name={likeIcon} size={25} color={likeIconColor} />
-            <InteractionText>{likeText}</InteractionText>
+            <AntDesign name={likeIcon} size={25} color={likeIconColor} />
+            <InteractionText>{likes.length}</InteractionText>
+          </Interaction>
+          <Interaction onPress={newDislikeOrRemoveDislike}>
+            <AntDesign name={dislikeIcon} size={25} color={dislikeIconColor} />
+            <InteractionText>{dislikes.length}</InteractionText>
           </Interaction>
           <Interaction
             onPress={() => {
@@ -245,7 +290,7 @@ const PostCard = ({ item }) => {
             }}
           >
             <FontAwesome name="commenting" size={24} color="#002D02" />
-            <InteractionText>{commentText}</InteractionText>
+            <InteractionText>{comments.length}</InteractionText>
           </Interaction>
           <BottomSheet
             isVisible={bottomSheetStatus}

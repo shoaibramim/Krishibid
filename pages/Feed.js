@@ -71,6 +71,7 @@ export default function Feed(props) {
             postImg,
             postedTime,
             likes,
+            dislikes,
             comments,
           } = doc.data();
           list.push({
@@ -80,6 +81,7 @@ export default function Feed(props) {
             postImg,
             postedTime,
             likes,
+            dislikes,
             comments,
           });
         });

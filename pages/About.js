@@ -42,6 +42,21 @@ import { getAuth } from "firebase/auth";
 
 import { gsap, Back } from "gsap-rn";
 
+import { useQuery, gql } from "@apollo/client";
+
+const GET_GITHUB_INFO = gql`
+  query {
+    viewer {
+      login
+      name
+      bio
+      repositories {
+        totalCount
+      }
+    }
+  }
+`;
+
 export default function About(props) {
   const { navigation, route } = props;
   const onLayoutRootView = route.params.onLayoutRootView;
@@ -59,6 +74,8 @@ export default function About(props) {
 
   const [currentLocation, setCurrentLocation] = useState(null);
   const [initialRegion, setInitialRegion] = useState(null);
+
+  const [githubInfo, setGithubInfo] = useState(null);
 
   const imageRef = useRef(null);
 
@@ -177,6 +194,13 @@ export default function About(props) {
     }
   };
 
+  const { data } = useQuery(GET_GITHUB_INFO);
+  useEffect(() => {
+    if (data) {
+      setGithubInfo(data.viewer);
+    }
+  }, [data]);
+  // console.log(githubInfo);
   return (
     <View style={styles.container} onLayout={onLayoutRootView}>
       <SafeAreaView>
@@ -369,6 +393,21 @@ export default function About(props) {
                 </TouchableOpacity>
               </View>
             </Modal>
+          </View>
+          <View>
+            <Text style={styles.textHeadline}>Creator's Github Info</Text>
+            <View style={styles.reviewingOptionContainer}>
+              {loading ? (
+                <ActivityIndicator size={50} color={"#002D02"} />
+              ) : (
+                <View style={{ alignItems: "center" }}>
+                  {githubInfo&& <Text style={styles.textHeadline}>Name: {githubInfo.name}</Text>}
+                  {githubInfo&& <Text style={styles.textDescription}>Username: {githubInfo.login}</Text>}
+                  {githubInfo&& <Text style={styles.textDescription}>Bio: {githubInfo.bio}</Text>}
+                  {githubInfo&& <Text style={styles.textDescription}>Total Repositories: {githubInfo.repositories.totalCount}</Text>}
+                </View>
+              )}
+            </View>
           </View>
           <View>
             <Text style={styles.textHeadline}>Review Krishibid</Text>

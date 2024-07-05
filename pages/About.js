@@ -44,6 +44,8 @@ import { gsap, Back } from "gsap-rn";
 
 import { useQuery, gql } from "@apollo/client";
 
+import PDFLib, { PDFDocument, PDFPage } from "react-native-pdf-lib";
+
 const GET_GITHUB_INFO = gql`
   query {
     viewer {
@@ -200,7 +202,41 @@ export default function About(props) {
       setGithubInfo(data.viewer);
     }
   }, [data]);
-  // console.log(githubInfo);
+  console.log(githubInfo);
+
+  const generatePDF = async () => {
+    // Create a PDF page with text and rectangles
+    const page1 = PDFPage.create()
+      .setMediaBox(200, 200)
+      .drawText("You can add text and rectangles to the PDF!", {
+        x: 5,
+        y: 235,
+        color: "#007386",
+      })
+      .drawRectangle({
+        x: 25,
+        y: 25,
+        width: 150,
+        height: 150,
+        color: "#FF99CC",
+      })
+      .drawRectangle({
+        x: 75,
+        y: 75,
+        width: 50,
+        height: 50,
+        color: "#99FFCC",
+      });
+    const docsDir = await PDFLib.getDocumentsDirectory();
+    const pdfPath = `${docsDir}/sample.pdf`;
+    PDFDocument.create(pdfPath)
+      .addPages(page1)
+      .write() // Returns a promise that resolves with the PDF's path
+      .then((path) => {
+        console.log("PDF created at: " + path);
+        // Do stuff with your shiny new PDF!
+      });
+  };
   return (
     <View style={styles.container} onLayout={onLayoutRootView}>
       <SafeAreaView>
@@ -401,10 +437,26 @@ export default function About(props) {
                 <ActivityIndicator size={50} color={"#002D02"} />
               ) : (
                 <View style={{ alignItems: "center" }}>
-                  {githubInfo&& <Text style={styles.textHeadline}>Name: {githubInfo.name}</Text>}
-                  {githubInfo&& <Text style={styles.textDescription}>Username: {githubInfo.login}</Text>}
-                  {githubInfo&& <Text style={styles.textDescription}>Bio: {githubInfo.bio}</Text>}
-                  {githubInfo&& <Text style={styles.textDescription}>Total Repositories: {githubInfo.repositories.totalCount}</Text>}
+                  {githubInfo && (
+                    <Text style={styles.textHeadline}>
+                      Name: {githubInfo.name}
+                    </Text>
+                  )}
+                  {githubInfo && (
+                    <Text style={styles.textDescription}>
+                      Username: {githubInfo.login}
+                    </Text>
+                  )}
+                  {githubInfo && (
+                    <Text style={styles.textDescription}>
+                      Bio: {githubInfo.bio}
+                    </Text>
+                  )}
+                  {githubInfo && (
+                    <Text style={styles.textDescription}>
+                      Total Repositories: {githubInfo.repositories.totalCount}
+                    </Text>
+                  )}
                 </View>
               )}
             </View>
@@ -469,6 +521,12 @@ export default function About(props) {
               )}
             </View>
           </View>
+          <TouchableOpacity
+            onPress={() => generatePDF()}
+            style={styles.buttonFlexBox}
+          >
+            <Text style={styles.buttonText}>Generate Weekly Report</Text>
+          </TouchableOpacity>
           <View
             style={{
               justifyContent: "center",

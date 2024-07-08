@@ -10,12 +10,10 @@ import {
 } from "react-native";
 import React, { useState, useEffect } from "react";
 import * as ImagePicker from "expo-image-picker";
-import { FontAwesome, Entypo, MaterialIcons } from "@expo/vector-icons";
+import { FontAwesome, MaterialIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import firebase from "firebase/app";
 import { auth, db } from "../firebase";
 import {
-  Timestamp,
   addDoc,
   collection,
   doc,
@@ -25,7 +23,6 @@ import {
   getDocs,
 } from "firebase/firestore";
 import "firebase/auth";
-import { getAuth } from "firebase/auth";
 
 const storageBucket = process.env.EXPO_PUBLIC_storageBucket;
 

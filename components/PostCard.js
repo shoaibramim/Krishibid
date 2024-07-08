@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { FontAwesome, Entypo, Ionicons, AntDesign } from "@expo/vector-icons";
 import {
-  Container,
   Card,
   UserInfo,
   UserImg,
@@ -31,8 +30,6 @@ import {
   arrayUnion,
 } from "firebase/firestore";
 import {
-  Image,
-  ScrollView,
   Text,
   TouchableOpacity,
   View,
@@ -212,10 +209,8 @@ const PostCard = ({ item }) => {
 
   const newLikeOrRemoveLike = () => {
     if (likes.includes(user_id) == true) {
-      ///Remove the Like
       removeLike();
     } else {
-      ///new Like + remove dislike
       addLike();
       removeDislike();
     }

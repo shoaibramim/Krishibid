@@ -1,7 +1,6 @@
 import {
   View,
   Text,
-  Image,
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
@@ -10,7 +9,7 @@ import {
   FlatList,
 } from "react-native";
 import React, { useState, useEffect } from "react";
-import { FontAwesome, Entypo, Feather } from "@expo/vector-icons";
+import { Entypo } from "@expo/vector-icons";
 import { auth, db } from "../firebase";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
@@ -18,9 +17,6 @@ import {
   getDocs,
   query,
   where,
-  Timestamp,
-  updateDoc,
-  doc,
   orderBy,
 } from "firebase/firestore";
 import { useIsFocused } from "@react-navigation/native";

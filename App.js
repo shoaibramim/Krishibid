@@ -1,5 +1,4 @@
 import { useCallback } from "react";
-import { StatusBar } from "expo-status-bar";
 import { useFonts } from "expo-font";
 import { StyleSheet } from "react-native";
 import * as SplashScreen from "expo-splash-screen";

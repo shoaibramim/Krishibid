@@ -1,8 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import {
   ActivityIndicator,
-  Image,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,

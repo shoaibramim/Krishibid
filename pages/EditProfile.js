@@ -1,7 +1,6 @@
 import {
   View,
   Text,
-  Image,
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
@@ -20,7 +19,6 @@ import {
   getDocs,
   query,
   where,
-  Timestamp,
   updateDoc,
   doc,
 } from "firebase/firestore";

@@ -21,9 +21,7 @@ import * as FileSystem from "expo-file-system";
 import {
   bundleResourceIO,
   decodeJpeg,
-  fetch,
 } from "@tensorflow/tfjs-react-native";
-import * as ImageManipulator from "expo-image-manipulator";
 
 const modelJson = require("../assets/trained_model/model.json");
 const modelWeights = require("../assets/trained_model/weights.bin");

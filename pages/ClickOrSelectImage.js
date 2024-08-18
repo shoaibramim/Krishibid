@@ -148,7 +148,7 @@ const ClickOrSelectImage = (props) => {
 
   const changeLogoMargin = () => {
     if (bottomSheetStatus == true) {
-      setLogoMargin(300);
+      setLogoMargin(150);
     } else {
       setLogoMargin(0);
     }

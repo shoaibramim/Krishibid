@@ -14,7 +14,7 @@ import {
 } from "react-native";
 import React, { useEffect, useState, useRef } from "react";
 import { WebView } from "react-native-webview";
-import MapView, { Marker } from "react-native-maps";
+import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import * as Location from "expo-location";
 import { Entypo, AntDesign } from "@expo/vector-icons";
 import { AirbnbRating } from "react-native-ratings";
@@ -275,6 +275,7 @@ export default function About(props) {
                 <View style={styles.modalContainer}>
                   <MapView
                     style={styles.mapView}
+                    provider={PROVIDER_GOOGLE}
                     initialRegion={{
                       latitude: 22.4716,
                       longitude: 91.7877,
@@ -350,6 +351,7 @@ export default function About(props) {
                   {initialRegion && (
                     <MapView
                       style={styles.mapView}
+                      provider={PROVIDER_GOOGLE}
                       initialRegion={initialRegion}
                     >
                       {currentLocation && (

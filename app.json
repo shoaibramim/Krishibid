@@ -39,6 +39,11 @@
       },
       "package": "com.shoaibramim.Krishibid"
     },
+    "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyDYUDVcyIfjP-xMid-UAfMcwlqOBeii__I"
+        }
+      },
     "web": {
       "favicon": "./assets/favicon.png"
     },

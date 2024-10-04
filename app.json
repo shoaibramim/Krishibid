@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Krishibid",
-    "slug": "Krishibid",
+    "slug": "krishibid",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -49,7 +49,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "90ae465b-a3eb-40ee-9c83-33016e9147ad"
+        "projectId": "cdea026c-5bf2-4c1f-ba99-a58bf5dcc5a8"
       }
     },
     "plugins": [

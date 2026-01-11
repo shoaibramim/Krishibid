@@ -2,6 +2,7 @@
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Appetize.io-brightgreen)](https://appetize.io/app/b_fc3ajqenc6ejwcdketfo4egcsu)
 [![APK Download](https://img.shields.io/badge/Download-APK-blue)](https://drive.google.com/file/d/10NI-Yfb_dBSD51O2CYjJOdg_Zx_HGS1x/view?usp=sharing)
+[![Figma UI Prototype](https://img.shields.io/badge/Figma-UI-Prototype-blue)](https://drive.google.com/file/d/10NI-Yfb_dBSD51O2CYjJOdg_Zx_HGS1x/view?usp=sharing)
 
 A mobile application that integrates a TensorFlow Lite model for real-time crop disease prediction, enabling farmers and agricultural professionals to quickly identify diseases affecting corn, potato, rice, and wheat crops through image recognition.
 
